@@ -1,0 +1,68 @@
+# Root level gitignore for fhe-dice-game
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+build/
+dist/ 
+.next/
+out/
+artifacts/
+cache/
+types/
+deployments/
+tmp/
+coverage/
+
+# FHEVM specific
+fhevmTemp/
+
+# Environment files
+*.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Package manager lock files
+yarn.lock
+package-lock.json
+
+# Runtime data
+*.pid
+*.seed
+*.pid.lock
+
+# Misc
+*.tsbuildinfo
+*.pem
+coverage.json
+
+# Git modules (since we removed submodules)
+.gitmodules

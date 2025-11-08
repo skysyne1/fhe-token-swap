@@ -1,0 +1,420 @@
+import { useCallback, useEffect, useState } from "react";
+import { useAccount, usePublicClient, useWalletClient } from "wagmi";
+
+// import { useInMemoryStorage } from '../fhevm-sdk/src/react/useInMemoryStorage'; // Temporarily disabled
+// import { FhevmType } from '@fhevm/hardhat-plugin'; // Temporarily disabled
+
+// Contract addresses (will be updated after deployment)
+const CONTRACT_ADDRESSES = {
+  31337: "0x0000000000000000000000000000000000000000", // Hardhat local
+  11155111: "0x0000000000000000000000000000000000000000", // Sepolia
+} as const;
+
+// Contract ABI (essential functions only)
+const ENCRYPTED_DICE_GAME_ABI = [
+  // Read functions
+  "function owner() view returns (address)",
+  "function gameCounter() view returns (uint256)",
+  "function getBalance(address player) view returns (uint256)",
+  "function getGame(uint256 gameId) view returns (address player, uint8 diceCount, uint256 timestamp, bool isResolved)",
+  "function getGamePrediction(uint256 gameId) view returns (uint256)",
+  "function getGameStake(uint256 gameId) view returns (uint256)",
+  "function getGameDiceValues(uint256 gameId) view returns (uint256[])",
+
+  // Write functions
+  "function mintTokens(uint256 amount)",
+  "function swapETHForROLL() payable",
+  "function swapROLLForETH(uint256 encryptedAmount, bytes calldata amountProof)",
+  "function startGame(uint8 diceCount, uint256 encryptedPrediction, bytes calldata predictionProof, uint256 encryptedStake, bytes calldata stakeProof)",
+  "function resolveGame(uint256 gameId)",
+
+  // Events
+  "event GameStarted(uint256 indexed gameId, address indexed player, uint8 diceCount, uint256 timestamp)",
+  "event GameResolved(uint256 indexed gameId, address indexed player, uint256 timestamp)",
+  "event TokensSwapped(address indexed user, uint256 ethAmount, uint256 rollAmount, bool ethToRoll)",
+  "event TokensMinted(address indexed user, uint256 amount)",
+] as const;
+
+interface GameData {
+  id: number;
+  player: string;
+  diceCount: number;
+  timestamp: number;
+  isResolved: boolean;
+  prediction?: "even" | "odd";
+  stake?: number;
+  diceValues?: number[];
+  result?: "win" | "lose";
+}
+
+interface EncryptedDiceGameState {
+  // Contract info
+  contractAddress: string | null;
+  isContractReady: boolean;
+
+  // Player data
+  balance: number;
+  games: GameData[];
+  isLoading: boolean;
+  error: string | null;
+
+  // Game state
+  currentGameId: number | null;
+  isGamePending: boolean;
+}
+
+interface EncryptedDiceGameActions {
+  // Token operations
+  mintTokens: (amount: number) => Promise<void>;
+  swapETHForROLL: (ethAmount: string) => Promise<void>;
+  refreshBalance: () => Promise<void>;
+
+  // Game operations
+  startGame: (diceCount: number, prediction: "even" | "odd", stake: number) => Promise<number | null>;
+  resolveGame: (gameId: number) => Promise<void>;
+  refreshGames: () => Promise<void>;
+
+  // Utility
+  clearError: () => void;
+}
+
+export function useEncryptedDiceGame(): EncryptedDiceGameState & EncryptedDiceGameActions {
+  const { address, chain } = useAccount();
+  const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
+  // const { getEncryptedStorage } = useInMemoryStorage(); // Temporarily disabled
+
+  // State
+  const [state, setState] = useState<EncryptedDiceGameState>({
+    contractAddress: null,
+    isContractReady: false,
+    balance: 0,
+    games: [],
+    isLoading: false,
+    error: null,
+    currentGameId: null,
+    isGamePending: false,
+  });
+
+  // Get contract address for current chain
+  const getContractAddress = useCallback(() => {
+    if (!chain?.id) return null;
+    return CONTRACT_ADDRESSES[chain.id as keyof typeof CONTRACT_ADDRESSES] || null;
+  }, [chain?.id]);
+
+  // Initialize contract
+  useEffect(() => {
+    const contractAddress = getContractAddress();
+    setState(prev => ({
+      ...prev,
+      contractAddress,
+      isContractReady: Boolean(contractAddress && contractAddress !== "0x0000000000000000000000000000000000000000"),
+    }));
+  }, [getContractAddress]);
+
+  // Utility function to handle errors
+  const handleError = useCallback((error: any, operation: string) => {
+    console.error(`Error in ${operation}:`, error);
+    const errorMessage = error?.message || `Failed to ${operation}`;
+    setState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
+  }, []);
+
+  // Clear error
+  const clearError = useCallback(() => {
+    setState(prev => ({ ...prev, error: null }));
+  }, []);
+
+  // Refresh balance
+  const refreshBalance = useCallback(async () => {
+    if (!state.contractAddress || !address || !publicClient) {
+      return;
+    }
+
+    try {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+      const encryptedBalance = await publicClient.readContract({
+        address: state.contractAddress as `0x${string}`,
+        abi: ENCRYPTED_DICE_GAME_ABI,
+        functionName: "getBalance",
+        args: [address],
+      });
+
+      // For demo purposes, we'll use a placeholder balance
+      // In production, you'd decrypt the balance using FHEVM
+      let clearBalance = 0;
+
+      try {
+        // Try to decrypt if FHEVM is available (temporarily disabled)
+        // const fhevmStorage = getEncryptedStorage();
+        // if (fhevmStorage && encryptedBalance && encryptedBalance !== '0x0000000000000000000000000000000000000000000000000000000000000000') {
+        //   This would need proper FHEVM integration
+        //   clearBalance = Math.floor(Math.random() * 1000); // Placeholder
+        // }
+
+        // For now, use a placeholder balance calculation
+        if (
+          encryptedBalance &&
+          encryptedBalance !== "0x0000000000000000000000000000000000000000000000000000000000000000"
+        ) {
+          // Simple placeholder: extract some digits from the hash for demo
+          const balanceStr = encryptedBalance.toString();
+          if (balanceStr.length > 8) {
+            const hashNumber = parseInt(balanceStr.slice(-8), 16);
+            clearBalance = hashNumber % 10000; // Keep it reasonable
+          }
+        }
+      } catch (decryptError) {
+        console.warn("Could not decrypt balance:", decryptError);
+        // Use placeholder for demo
+        clearBalance = Math.floor(Math.random() * 1000);
+      }
+
+      setState(prev => ({
+        ...prev,
+        balance: clearBalance,
+        isLoading: false,
+      }));
+    } catch (error) {
+      handleError(error, "refresh balance");
+    }
+  }, [state.contractAddress, address, publicClient, handleError]);
+
+  // Mint tokens
+  const mintTokens = useCallback(
+    async (amount: number) => {
+      if (!state.contractAddress || !walletClient || !address) {
+        throw new Error("Wallet not connected or contract not ready");
+      }
+
+      try {
+        setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+        const hash = await walletClient.writeContract({
+          address: state.contractAddress as `0x${string}`,
+          abi: ENCRYPTED_DICE_GAME_ABI,
+          functionName: "mintTokens",
+          args: [BigInt(amount)],
+        });
+
+        // Wait for transaction
+        if (publicClient) {
+          await publicClient.waitForTransactionReceipt({ hash });
+        }
+
+        // Refresh balance
+        await refreshBalance();
+
+        setState(prev => ({ ...prev, isLoading: false }));
+      } catch (error) {
+        handleError(error, "mint tokens");
+        throw error;
+      }
+    },
+    [state.contractAddress, walletClient, address, publicClient, refreshBalance, handleError],
+  );
+
+  // Swap ETH for ROLL
+  const swapETHForROLL = useCallback(
+    async (ethAmount: string) => {
+      if (!state.contractAddress || !walletClient || !address) {
+        throw new Error("Wallet not connected or contract not ready");
+      }
+
+      try {
+        setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+        const value = BigInt(parseFloat(ethAmount) * 1e18); // Convert to wei
+
+        const hash = await walletClient.writeContract({
+          address: state.contractAddress as `0x${string}`,
+          abi: ENCRYPTED_DICE_GAME_ABI,
+          functionName: "swapETHForROLL",
+          value,
+        });
+
+        // Wait for transaction
+        if (publicClient) {
+          await publicClient.waitForTransactionReceipt({ hash });
+        }
+
+        // Refresh balance
+        await refreshBalance();
+
+        setState(prev => ({ ...prev, isLoading: false }));
+      } catch (error) {
+        handleError(error, "swap ETH for ROLL");
+        throw error;
+      }
+    },
+    [state.contractAddress, walletClient, address, publicClient, refreshBalance, handleError],
+  );
+
+  // Start game
+  const startGame = useCallback(
+    async (diceCount: number, prediction: "even" | "odd", stake: number): Promise<number | null> => {
+      if (!state.contractAddress || !walletClient || !address) {
+        throw new Error("Wallet not connected or contract not ready");
+      }
+
+      try {
+        setState(prev => ({ ...prev, isLoading: true, isGamePending: true, error: null }));
+
+        // For demo purposes, we'll use placeholder encrypted values
+        // In production, you'd encrypt using FHEVM
+        const encryptedPrediction = prediction === "even" ? "0x0001" : "0x0002"; // Placeholder
+        const encryptedStake = `0x${stake.toString(16).padStart(8, "0")}`; // Placeholder
+        const dummyProof = "0x"; // Placeholder proof
+
+        const hash = await walletClient.writeContract({
+          address: state.contractAddress as `0x${string}`,
+          abi: ENCRYPTED_DICE_GAME_ABI,
+          functionName: "startGame",
+          args: [diceCount, encryptedPrediction, dummyProof, encryptedStake, dummyProof],
+        });
+
+        // Wait for transaction and get receipt
+        if (publicClient) {
+          const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+          // Extract game ID from events (simplified)
+          let gameId = state.games.length; // Fallback to simple counter
+
+          setState(prev => ({
+            ...prev,
+            currentGameId: gameId,
+            isLoading: false,
+          }));
+
+          return gameId;
+        }
+
+        setState(prev => ({ ...prev, isLoading: false }));
+        return null;
+      } catch (error) {
+        setState(prev => ({ ...prev, isGamePending: false }));
+        handleError(error, "start game");
+        throw error;
+      }
+    },
+    [state.contractAddress, walletClient, address, publicClient, state.games.length, handleError],
+  );
+
+  // Resolve game
+  const resolveGame = useCallback(
+    async (gameId: number) => {
+      if (!state.contractAddress || !walletClient || !address) {
+        throw new Error("Wallet not connected or contract not ready");
+      }
+
+      try {
+        setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+        const hash = await walletClient.writeContract({
+          address: state.contractAddress as `0x${string}`,
+          abi: ENCRYPTED_DICE_GAME_ABI,
+          functionName: "resolveGame",
+          args: [BigInt(gameId)],
+        });
+
+        // Wait for transaction
+        if (publicClient) {
+          await publicClient.waitForTransactionReceipt({ hash });
+        }
+
+        // Refresh games and balance
+        await Promise.all([refreshGames(), refreshBalance()]);
+
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          isGamePending: false,
+          currentGameId: null,
+        }));
+      } catch (error) {
+        handleError(error, "resolve game");
+        throw error;
+      }
+    },
+    [state.contractAddress, walletClient, address, publicClient, handleError],
+  );
+
+  // Refresh games
+  const refreshGames = useCallback(async () => {
+    if (!state.contractAddress || !address || !publicClient) {
+      return;
+    }
+
+    try {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+      const gameCounter = (await publicClient.readContract({
+        address: state.contractAddress as `0x${string}`,
+        abi: ENCRYPTED_DICE_GAME_ABI,
+        functionName: "gameCounter",
+      })) as bigint;
+
+      const games: GameData[] = [];
+
+      // Fetch all games for the current player
+      for (let i = 0; i < Number(gameCounter); i++) {
+        try {
+          const gameData = (await publicClient.readContract({
+            address: state.contractAddress as `0x${string}`,
+            abi: ENCRYPTED_DICE_GAME_ABI,
+            functionName: "getGame",
+            args: [BigInt(i)],
+          })) as [string, number, bigint, boolean];
+
+          // Only include games for current player
+          if (gameData[0].toLowerCase() === address.toLowerCase()) {
+            games.push({
+              id: i,
+              player: gameData[0],
+              diceCount: gameData[1],
+              timestamp: Number(gameData[2]),
+              isResolved: gameData[3],
+              // Additional data would be fetched and decrypted in production
+              prediction: Math.random() > 0.5 ? "even" : "odd", // Placeholder
+              stake: Math.floor(Math.random() * 200) + 50, // Placeholder
+              diceValues: Array.from({ length: gameData[1] }, () => Math.floor(Math.random() * 6) + 1), // Placeholder
+              result: Math.random() > 0.5 ? "win" : "lose", // Placeholder
+            });
+          }
+        } catch (gameError) {
+          console.warn(`Could not fetch game ${i}:`, gameError);
+        }
+      }
+
+      setState(prev => ({
+        ...prev,
+        games: games.sort((a, b) => b.timestamp - a.timestamp), // Sort by newest first
+        isLoading: false,
+      }));
+    } catch (error) {
+      handleError(error, "refresh games");
+    }
+  }, [state.contractAddress, address, publicClient, handleError]);
+
+  // Auto-refresh data when wallet connects
+  useEffect(() => {
+    if (address && state.isContractReady) {
+      refreshBalance();
+      refreshGames();
+    }
+  }, [address, state.isContractReady, refreshBalance, refreshGames]);
+
+  return {
+    // State
+    ...state,
+
+    // Actions
+    mintTokens,
+    swapETHForROLL,
+    refreshBalance,
+    startGame,
+    resolveGame,
+    refreshGames,
+    clearError,
+  };
+}

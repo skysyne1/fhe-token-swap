@@ -1,0 +1,65 @@
+# fhevm
+fhevmTemp/
+
+# Build outputs
+artifacts/
+build/
+cache/
+coverage/
+dist/
+types/
+deployments/
+tmp/
+types/
+
+# Coverage
+.coverage_artifacts/
+.coverage_cache/
+.coverage_contracts/
+coverage.json
+*.lcov
+
+# Dependencies
+node_modules/
+.pnp.*
+
+# Environment files
+*.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# Package manager lock files
+yarn.lock
+package-lock.json
+# Giữ pnpm-lock.yaml nếu dùng pnpm
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Runtime
+*.pid
+*.seed
+*.pid.lock
+
+# Misc
+*.tsbuildinfo
