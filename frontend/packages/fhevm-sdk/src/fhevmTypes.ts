@@ -1,12 +1,11 @@
 import type { FhevmInstance as _FhevmInstance } from "@zama-fhe/relayer-sdk/bundle";
 import type { HandleContractPair as _HandleContractPair } from "@zama-fhe/relayer-sdk/bundle";
-import type { DecryptedResults as _DecryptedResults } from "@zama-fhe/relayer-sdk/bundle";
 import type { FhevmInstanceConfig as _FhevmInstanceConfig } from "@zama-fhe/relayer-sdk/web";
 
 export type FhevmInstance = _FhevmInstance;
 export type FhevmInstanceConfig = _FhevmInstanceConfig;
 export type HandleContractPair = _HandleContractPair;
-export type DecryptedResults = _DecryptedResults;
+export type DecryptedResults = Record<string, number | bigint>;
 
 export type FhevmDecryptionSignatureType = {
   publicKey: string;
@@ -36,4 +35,3 @@ export type EIP712Type = {
     }[];
   };
 };
-

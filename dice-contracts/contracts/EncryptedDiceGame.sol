@@ -4,8 +4,22 @@ pragma solidity ^0.8.24;
 import {FHE, euint32, euint8, ebool, externalEuint32, externalEuint8} from "@fhevm/solidity/lib/FHE.sol";
 import {EthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 
+/// @dev Custom errors for gas optimization and better UX
+error OnlyOwner();
+error InvalidDiceCount();
+error InvalidStakeAmount();
+error GameNotFound();
+error GameAlreadyResolved();
+error InsufficientBalance();
+error ZeroAddress();
+error MaxMintExceeded();
+error NoETHSent();
+error OnlyGamePlayer();
+
 /// @title Encrypted Dice Game Contract
 /// @notice A dice rolling game with FHE encryption for privacy
+/// @dev This contract uses FHEVM v0.9 for fully homomorphic encryption
+/// @author Zama Community Contributors
 contract EncryptedDiceGame is EthereumConfig {
     // Game constants
     uint256 public constant PAYOUT_MULTIPLIER = 195; // 1.95x payout
@@ -44,12 +58,12 @@ contract EncryptedDiceGame is EthereumConfig {
 
     // Modifiers
     modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner can call this function");
+        if (msg.sender != owner) revert OnlyOwner();
         _;
     }
 
     modifier validDiceCount(uint8 diceCount) {
-        require(diceCount >= 1 && diceCount <= 3, "Dice count must be 1-3");
+        if (diceCount < 1 || diceCount > 3) revert InvalidDiceCount();
         _;
     }
 
@@ -62,7 +76,7 @@ contract EncryptedDiceGame is EthereumConfig {
     /// @notice Mint ROLL tokens for testing
     /// @param amount Amount of ROLL tokens to mint
     function mintTokens(uint256 amount) external {
-        require(amount <= MAX_MINT, "Max mint is 10000 ROLL");
+        if (amount > MAX_MINT) revert MaxMintExceeded();
 
         euint32 encryptedAmount = FHE.asEuint32(uint32(amount));
         playerBalance[msg.sender] = FHE.add(playerBalance[msg.sender], encryptedAmount);
@@ -76,7 +90,7 @@ contract EncryptedDiceGame is EthereumConfig {
 
     /// @notice Swap ETH for ROLL tokens
     function swapETHForROLL() external payable {
-        require(msg.value > 0, "Must send ETH");
+        if (msg.value == 0) revert NoETHSent();
 
         uint256 rollAmount = msg.value * ROLL_TOKEN_RATE;
         euint32 encryptedAmount = FHE.asEuint32(uint32(rollAmount));
@@ -157,8 +171,8 @@ contract EncryptedDiceGame is EthereumConfig {
     /// @param gameId The game ID to resolve
     function resolveGame(uint256 gameId) external {
         Game storage game = games[gameId];
-        require(game.player == msg.sender, "Only game player can resolve");
-        require(!game.isResolved, "Game already resolved");
+        if (game.player != msg.sender) revert OnlyGamePlayer();
+        if (game.isResolved) revert GameAlreadyResolved();
 
         // Generate random dice values
         euint32 sum = FHE.asEuint32(0);
@@ -226,7 +240,7 @@ contract EncryptedDiceGame is EthereumConfig {
     /// @param gameId Game ID
     /// @return Encrypted prediction
     function getGamePrediction(uint256 gameId) external view returns (euint8) {
-        require(games[gameId].player == msg.sender, "Only game player can view prediction");
+        if (games[gameId].player != msg.sender) revert OnlyGamePlayer();
         return games[gameId].prediction;
     }
 
@@ -234,7 +248,7 @@ contract EncryptedDiceGame is EthereumConfig {
     /// @param gameId Game ID
     /// @return Encrypted stake amount
     function getGameStake(uint256 gameId) external view returns (euint32) {
-        require(games[gameId].player == msg.sender, "Only game player can view stake");
+        if (games[gameId].player != msg.sender) revert OnlyGamePlayer();
         return games[gameId].stakeAmount;
     }
 
@@ -242,7 +256,7 @@ contract EncryptedDiceGame is EthereumConfig {
     /// @param gameId Game ID
     /// @return Array of encrypted dice values
     function getGameDiceValues(uint256 gameId) external view returns (euint32[] memory) {
-        require(games[gameId].player == msg.sender, "Only game player can view dice values");
+        if (games[gameId].player != msg.sender) revert OnlyGamePlayer();
         return games[gameId].diceValues;
     }
 
