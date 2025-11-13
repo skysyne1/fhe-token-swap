@@ -1,13 +1,14 @@
-import "@fhevm/hardhat-plugin";
-import "@nomicfoundation/hardhat-chai-matchers";
-import "@nomicfoundation/hardhat-ethers";
-import "@nomicfoundation/hardhat-verify";
-import "@typechain/hardhat";
-import "hardhat-deploy";
-import "hardhat-gas-reporter";
+require("@fhevm/hardhat-plugin");
+require("@nomicfoundation/hardhat-chai-matchers");
+require("@nomicfoundation/hardhat-ethers");
+require("@nomicfoundation/hardhat-verify");
+require("@typechain/hardhat");
+require("hardhat-deploy");
+require("hardhat-gas-reporter");
+require("solidity-coverage");
+
 import type { HardhatUserConfig } from "hardhat/config";
 import { vars } from "hardhat/config";
-import "solidity-coverage";
 
 import "./tasks/accounts";
 import "./tasks/FHECounter";
