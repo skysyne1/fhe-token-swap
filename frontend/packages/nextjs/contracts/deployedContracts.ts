@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/helper/contract";
 const deployedContracts = {
   31337: {
     EncryptedDiceGame: {
-      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      address: "0xb87016578Ad00e7bAAF1d9D99296df7d215A62b2",
       abi: [
         {
           inputs: [],
@@ -606,7 +606,7 @@ const deployedContracts = {
       deployedOnBlock: 3,
     },
     FHECounter: {
-      address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      address: "0x5543313646c276654a86b0A70Bff59F34a2834e1",
       abi: [
         {
           inputs: [
@@ -673,6 +673,676 @@ const deployedContracts = {
       ],
       inheritedFunctions: {},
       deployedOnBlock: 4,
+    },
+  },
+  11155111: {
+    EncryptedDiceGame: {
+      address: "0x919c0299ec078830DA292C9d9982E20C09666df2",
+      abi: [
+        {
+          inputs: [],
+          stateMutability: "nonpayable",
+          type: "constructor",
+        },
+        {
+          inputs: [],
+          name: "GameAlreadyResolved",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "InvalidDiceCount",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "MaxMintExceeded",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "NoETHSent",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "OnlyGamePlayer",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "OnlyOwner",
+          type: "error",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "uint256",
+              name: "gameId",
+              type: "uint256",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "player",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "timestamp",
+              type: "uint256",
+            },
+          ],
+          name: "GameResolved",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "uint256",
+              name: "gameId",
+              type: "uint256",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "player",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint8",
+              name: "diceCount",
+              type: "uint8",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "timestamp",
+              type: "uint256",
+            },
+          ],
+          name: "GameStarted",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "user",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "amount",
+              type: "uint256",
+            },
+          ],
+          name: "TokensMinted",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "user",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "ethAmount",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "rollAmount",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "bool",
+              name: "ethToRoll",
+              type: "bool",
+            },
+          ],
+          name: "TokensSwapped",
+          type: "event",
+        },
+        {
+          stateMutability: "payable",
+          type: "fallback",
+        },
+        {
+          inputs: [],
+          name: "BASIS_POINTS",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "MAX_MINT",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "MAX_STAKE",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "MIN_STAKE",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "PAYOUT_MULTIPLIER",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "ROLL_TOKEN_RATE",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "gameCounter",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          name: "games",
+          outputs: [
+            {
+              internalType: "address",
+              name: "player",
+              type: "address",
+            },
+            {
+              internalType: "uint8",
+              name: "diceCount",
+              type: "uint8",
+            },
+            {
+              internalType: "euint8",
+              name: "prediction",
+              type: "bytes32",
+            },
+            {
+              internalType: "euint32",
+              name: "stakeAmount",
+              type: "bytes32",
+            },
+            {
+              internalType: "uint256",
+              name: "timestamp",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "isResolved",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "player",
+              type: "address",
+            },
+          ],
+          name: "getBalance",
+          outputs: [
+            {
+              internalType: "euint32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "gameId",
+              type: "uint256",
+            },
+          ],
+          name: "getGame",
+          outputs: [
+            {
+              internalType: "address",
+              name: "player",
+              type: "address",
+            },
+            {
+              internalType: "uint8",
+              name: "diceCount",
+              type: "uint8",
+            },
+            {
+              internalType: "uint256",
+              name: "timestamp",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "isResolved",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "gameId",
+              type: "uint256",
+            },
+          ],
+          name: "getGameDiceValues",
+          outputs: [
+            {
+              internalType: "euint32[]",
+              name: "",
+              type: "bytes32[]",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "gameId",
+              type: "uint256",
+            },
+          ],
+          name: "getGamePrediction",
+          outputs: [
+            {
+              internalType: "euint8",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "gameId",
+              type: "uint256",
+            },
+          ],
+          name: "getGameStake",
+          outputs: [
+            {
+              internalType: "euint32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "player",
+              type: "address",
+            },
+          ],
+          name: "getPlayerGameCount",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "player",
+              type: "address",
+            },
+          ],
+          name: "getPlayerGames",
+          outputs: [
+            {
+              internalType: "uint256[]",
+              name: "",
+              type: "uint256[]",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "amount",
+              type: "uint256",
+            },
+          ],
+          name: "mintTokens",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "owner",
+          outputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          name: "playerBalance",
+          outputs: [
+            {
+              internalType: "euint32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          name: "playerGames",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "protocolId",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "gameId",
+              type: "uint256",
+            },
+          ],
+          name: "resolveGame",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint8",
+              name: "diceCount",
+              type: "uint8",
+            },
+            {
+              internalType: "externalEuint8",
+              name: "encryptedPrediction",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes",
+              name: "predictionProof",
+              type: "bytes",
+            },
+            {
+              internalType: "externalEuint32",
+              name: "encryptedStake",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes",
+              name: "stakeProof",
+              type: "bytes",
+            },
+          ],
+          name: "startGame",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "swapETHForROLL",
+          outputs: [],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "externalEuint32",
+              name: "encryptedAmount",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes",
+              name: "amountProof",
+              type: "bytes",
+            },
+          ],
+          name: "swapROLLForETH",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "withdrawETH",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          stateMutability: "payable",
+          type: "receive",
+        },
+      ],
+      inheritedFunctions: {},
+      deployedOnBlock: 9622383,
+    },
+    FHECounter: {
+      address: "0x5D015EdC52847BD6F3701A771ee69317DDc43f53",
+      abi: [
+        {
+          inputs: [
+            {
+              internalType: "externalEuint32",
+              name: "inputEuint32",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes",
+              name: "inputProof",
+              type: "bytes",
+            },
+          ],
+          name: "decrement",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getCount",
+          outputs: [
+            {
+              internalType: "euint32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "externalEuint32",
+              name: "inputEuint32",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes",
+              name: "inputProof",
+              type: "bytes",
+            },
+          ],
+          name: "increment",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "protocolId",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+      ],
+      inheritedFunctions: {},
+      deployedOnBlock: 9622384,
     },
   },
 } as const;

@@ -186,7 +186,7 @@ export function HeaderDiceGame({
                             </svg>
                           </div>
                           <div>
-                            <p className="text-xs text-[#a3a3a3]">Sepolia ETH</p>
+                            <p className="text-xs text-[#a3a3a3]">{getNetworkName(chain?.id)} ETH</p>
                             <p className="font-semibold text-[#ffffff]">{ethBalance.toFixed(4)}</p>
                           </div>
                         </div>
