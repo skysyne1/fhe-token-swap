@@ -15,6 +15,7 @@ const DappWrapper = ({ children }: { children: React.ReactNode }) => {
     <html suppressHydrationWarning className={``}>
       <head>
         <link href="https://api.fontshare.com/v2/css?f[]=telegraf@400,500,700&display=swap" rel="stylesheet" />
+        <script src="https://cdn.zama.org/relayer-sdk-js/0.3.0-5/relayer-sdk-js.umd.cjs"></script>
       </head>
       <body>
         <ThemeProvider enableSystem>

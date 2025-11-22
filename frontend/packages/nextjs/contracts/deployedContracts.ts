@@ -687,7 +687,7 @@ const deployedContracts = {
   },
   11155111: {
     EncryptedDiceGame: {
-      address: "0x270cEba37b81a2CE103E5E76a5b794eb33cDf101",
+      address: "0x548806a9c72e25CE3dc91a9c9fB28D652fDA41DD",
       abi: [
         {
           inputs: [],
@@ -1320,7 +1320,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 9655688,
+      deployedOnBlock: 9668573,
     },
     FHECounter: {
       address: "0xf4502C41A58ddFCEc38382d6c1875a0dBdCA9692",

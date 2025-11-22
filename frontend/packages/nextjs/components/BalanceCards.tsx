@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { useDecrypt } from "../../fhevm-sdk/src/adapters/useDecrypt";
+import { initializeFheInstance } from "../../fhevm-sdk/src/core";
 import { useEncryptedDiceGame } from "../hooks/useEncryptedDiceGame";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
@@ -8,17 +11,65 @@ export function BalanceCards() {
   const { address } = useAccount();
   const { data: ethBalanceData } = useBalance({ address });
 
-  const {
-    balance: rollBalance,
-    encryptedBalance,
-    makeBalancePublic,
-    canDecrypt,
-    isDecrypting,
-    refreshBalance,
-    isLoading,
-    isContractReady,
-  } = useEncryptedDiceGame();
+  const { encryptedBalance, refreshBalance, isLoading, isContractReady, contractAddress } = useEncryptedDiceGame();
+
+  const { decrypt } = useDecrypt();
+
+  // Manual decrypt state
+  const [rollBalance, setRollBalance] = useState<number | undefined>(undefined);
+  const [isDecrypting, setIsDecrypting] = useState(false);
+  const [lastDecryptedHandle, setLastDecryptedHandle] = useState<string>("");
+
   const ethBalance = ethBalanceData ? parseFloat(ethBalanceData.formatted) : 0;
+
+  // Reset decrypted balance when encrypted balance handle changes
+  useEffect(() => {
+    console.log("🎯 BalanceCards state:", { encryptedBalance, rollBalance, isContractReady });
+    if (encryptedBalance && encryptedBalance !== lastDecryptedHandle) {
+      setRollBalance(undefined);
+      setLastDecryptedHandle("");
+    }
+  }, [encryptedBalance, lastDecryptedHandle, rollBalance, isContractReady]);
+
+  // Manual decrypt function (replaces makeBalancePublic)
+  const makeBalancePublic = async () => {
+    if (!encryptedBalance || !isContractReady || !contractAddress) {
+      console.warn("❌ Cannot decrypt: Missing encrypted balance, contract not ready, or no contract address");
+      return;
+    }
+
+    setIsDecrypting(true);
+
+    try {
+      console.log("🔐 Starting manual decrypt for balance:", encryptedBalance);
+
+      // Ensure FHEVM is initialized before decryption
+      console.log("🔄 Ensuring FHEVM is initialized...");
+      await initializeFheInstance();
+      console.log("✅ FHEVM initialization confirmed");
+
+      // Use template's decrypt with EIP-712 signature - need signer
+      if (!window.ethereum) {
+        throw new Error("MetaMask not found");
+      }
+
+      const { ethers } = await import("ethers");
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const decryptedValue = await decrypt(encryptedBalance, contractAddress, signer);
+
+      console.log("✅ Decryption successful:", decryptedValue);
+      setRollBalance(decryptedValue);
+      setLastDecryptedHandle(encryptedBalance);
+
+      // Show success feedback
+      console.log("🎉 Balance decrypted successfully! Value:", decryptedValue, "ROLL");
+    } catch (error: any) {
+      console.error("❌ Decryption failed:", error);
+    } finally {
+      setIsDecrypting(false);
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
@@ -57,23 +108,23 @@ export function BalanceCards() {
                 <div className="text-lg font-mono text-[#fde047] break-all">
                   🔐
                   {(() => {
-                    const balanceStr =
-                      typeof encryptedBalance === "bigint"
-                        ? "0x" + encryptedBalance.toString(16).padStart(64, "0")
-                        : encryptedBalance;
-                    return balanceStr.substring(0, 20) + "...";
+                    let balanceStr = encryptedBalance;
+                    // Ensure it starts with 0x
+                    if (balanceStr && !balanceStr.startsWith("0x")) {
+                      balanceStr = "0x" + balanceStr;
+                    }
+                    // Show first 20 characters + ...
+                    return balanceStr && balanceStr.length > 20 ? balanceStr.substring(0, 20) + "..." : balanceStr;
                   })()}
                 </div>
-                <div className="text-sm text-[#a3a3a3] mt-1">
-                  Balance is encrypted - make it public to auto-display
-                </div>
+                <div className="text-sm text-[#a3a3a3] mt-1">Balance is encrypted - make it public to auto-display</div>
                 <Button
                   onClick={makeBalancePublic}
-                  disabled={isLoading}
+                  disabled={isLoading || isDecrypting}
                   size="sm"
                   className="mt-2 bg-[#fde047]/20 hover:bg-[#fde047]/30 text-[#fde047] border border-[#fde047]/30"
                 >
-                  {isLoading ? "Processing..." : "Make Balance Public"}
+                  {isDecrypting ? "Decrypting..." : "Decrypt Balance"}
                 </Button>
               </>
             ) : (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { InMemoryStorageProvider } from "@fhevm-sdk";
+// InMemoryStorageProvider removed - not needed with new template pattern
 import { RainbowKitProvider, darkTheme, lightTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
@@ -47,19 +47,17 @@ export const DiceGameWrapper = ({ children }: { children: React.ReactNode }) => 
   }, []);
 
   return (
-    <InMemoryStorageProvider>
-      <WagmiProvider config={wagmiConfig}>
-        <QueryClientProvider client={diceGameQueryClient}>
-          <RainbowKitProvider
-            avatar={BlockieAvatar}
-            theme={mounted ? (isDarkMode ? darkTheme() : lightTheme()) : lightTheme()}
-          >
-            <ProgressBar height="3px" color="#fde047" />
-            <AppContent>{children}</AppContent>
-            <Toaster />
-          </RainbowKitProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
-    </InMemoryStorageProvider>
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={diceGameQueryClient}>
+        <RainbowKitProvider
+          avatar={BlockieAvatar}
+          theme={mounted ? (isDarkMode ? darkTheme() : lightTheme()) : lightTheme()}
+        >
+          <ProgressBar height="3px" color="#fde047" />
+          <AppContent>{children}</AppContent>
+          <Toaster />
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 };

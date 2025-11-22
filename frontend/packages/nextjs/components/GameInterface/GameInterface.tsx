@@ -33,13 +33,12 @@ export function GameInterface({ onShowOverlay, onHideOverlay }: GameInterfacePro
     resolveGame,
     swapETHForROLL,
     mintTokens,
-    decryptBalance,
-    refresh,
+    refreshBalance,
     clearError,
   } = useEncryptedDiceGame();
 
-  // Get decrypted balance (provide a default value)
-  const balance = decryptBalance() || 0;
+  // Balance không còn decrypted tự động - sẽ dùng manual decrypt trong BalanceCards
+  const balance = 0; // Placeholder - actual balance shown in BalanceCards
   const isContractReady = isContractAvailable;
   const games = gameHistory || [];
 
@@ -180,7 +179,7 @@ export function GameInterface({ onShowOverlay, onHideOverlay }: GameInterfacePro
     try {
       await mintTokens(1000); // Mint 1000 ROLL for testing
       toast.success("Minted 1000 ROLL tokens for testing!");
-      await refresh();
+      await refreshBalance();
     } catch (error: any) {
       console.error("Mint error:", error);
       toast.error("Failed to mint tokens", {
@@ -215,7 +214,7 @@ export function GameInterface({ onShowOverlay, onHideOverlay }: GameInterfacePro
         contractError={contractError}
         onMintTokens={handleMintTokens}
         onSwapETHForROLL={swapETHForROLL}
-        onRefresh={refresh}
+        onRefresh={refreshBalance}
         onClearError={clearError}
       />
     </div>
