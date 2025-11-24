@@ -6,6 +6,21 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ArrowLeftRight, ChevronDown, Coins, Dices, Home, LogOut, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useAccount, useDisconnect, useSwitchChain } from "wagmi";
+import { useDecryptedBalance } from "~~/contexts/DecryptedBalanceContext";
+
+// Helper function to get network name
+const getNetworkName = (chainId?: number) => {
+  switch (chainId) {
+    case 31337:
+      return "Localhost";
+    case 11155111:
+      return "Sepolia";
+    case 1:
+      return "Ethereum";
+    default:
+      return "Unknown";
+  }
+};
 
 interface HeaderProps {
   walletConnected: boolean;
@@ -22,6 +37,7 @@ export function HeaderDiceGame({
   rollBalance = 0,
   onDisconnect,
 }: HeaderProps) {
+  const { decryptedRollBalance } = useDecryptedBalance();
   const [showWalletMenu, setShowWalletMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { disconnect } = useDisconnect();
@@ -200,7 +216,13 @@ export function HeaderDiceGame({
                           </div>
                           <div>
                             <p className="text-xs text-[#a3a3a3]">ROLL Token</p>
-                            <p className="font-semibold text-[#ffffff]">{rollBalance.toLocaleString()}</p>
+                            <p className="font-semibold text-[#ffffff]">
+                              {decryptedRollBalance !== undefined
+                                ? decryptedRollBalance.toLocaleString()
+                                : rollBalance === -1
+                                  ? "🔐 Encrypted"
+                                  : rollBalance.toLocaleString()}
+                            </p>
                           </div>
                         </div>
                       </div>

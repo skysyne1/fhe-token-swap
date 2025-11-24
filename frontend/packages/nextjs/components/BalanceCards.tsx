@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDecrypt } from "../../fhevm-sdk/src/adapters/useDecrypt";
 import { initializeFheInstance } from "../../fhevm-sdk/src/core";
+import { useDecryptedBalance } from "../contexts/DecryptedBalanceContext";
 import { useEncryptedDiceGame } from "../hooks/useEncryptedDiceGame";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
@@ -12,24 +13,31 @@ export function BalanceCards() {
   const { data: ethBalanceData } = useBalance({ address });
 
   const { encryptedBalance, refreshBalance, isLoading, isContractReady, contractAddress } = useEncryptedDiceGame();
+  const { decryptedRollBalance, setDecryptedRollBalance, lastDecryptedHandle, setLastDecryptedHandle } =
+    useDecryptedBalance();
 
   const { decrypt } = useDecrypt();
 
   // Manual decrypt state
-  const [rollBalance, setRollBalance] = useState<number | undefined>(undefined);
   const [isDecrypting, setIsDecrypting] = useState(false);
-  const [lastDecryptedHandle, setLastDecryptedHandle] = useState<string>("");
 
   const ethBalance = ethBalanceData ? parseFloat(ethBalanceData.formatted) : 0;
 
   // Reset decrypted balance when encrypted balance handle changes
   useEffect(() => {
-    console.log("🎯 BalanceCards state:", { encryptedBalance, rollBalance, isContractReady });
+    console.log("🎯 BalanceCards state:", { encryptedBalance, decryptedRollBalance, isContractReady });
     if (encryptedBalance && encryptedBalance !== lastDecryptedHandle) {
-      setRollBalance(undefined);
+      setDecryptedRollBalance(undefined);
       setLastDecryptedHandle("");
     }
-  }, [encryptedBalance, lastDecryptedHandle, rollBalance, isContractReady]);
+  }, [
+    encryptedBalance,
+    lastDecryptedHandle,
+    decryptedRollBalance,
+    isContractReady,
+    setDecryptedRollBalance,
+    setLastDecryptedHandle,
+  ]);
 
   // Manual decrypt function (replaces makeBalancePublic)
   const makeBalancePublic = async () => {
@@ -59,7 +67,7 @@ export function BalanceCards() {
       const decryptedValue = await decrypt(encryptedBalance, contractAddress, signer);
 
       console.log("✅ Decryption successful:", decryptedValue);
-      setRollBalance(decryptedValue);
+      setDecryptedRollBalance(decryptedValue);
       setLastDecryptedHandle(encryptedBalance);
 
       // Show success feedback
@@ -94,13 +102,13 @@ export function BalanceCards() {
             </div>
           </div>
           <div className="mt-2">
-            {rollBalance !== undefined ? (
+            {decryptedRollBalance !== undefined ? (
               // Decrypted balance
               <>
                 <div className="text-3xl font-bold bg-gradient-to-r from-[#fde047] via-[#fef3c7] to-[#fed7aa] bg-clip-text text-transparent drop-shadow-sm">
-                  {rollBalance.toLocaleString()}
+                  {decryptedRollBalance.toLocaleString()}
                 </div>
-                <div className="text-sm text-[#a3a3a3] mt-1">≈ ${(rollBalance * 0.001).toFixed(2)} USD</div>
+                <div className="text-sm text-[#a3a3a3] mt-1">≈ ${(decryptedRollBalance * 0.001).toFixed(2)} USD</div>
               </>
             ) : encryptedBalance ? (
               // Encrypted balance
@@ -117,7 +125,9 @@ export function BalanceCards() {
                     return balanceStr && balanceStr.length > 20 ? balanceStr.substring(0, 20) + "..." : balanceStr;
                   })()}
                 </div>
-                <div className="text-sm text-[#a3a3a3] mt-1">Balance is encrypted - make it public to auto-display</div>
+                <div className="text-sm text-[#a3a3a3] mt-1">
+                  Balance is encrypted – decrypt with your wallet to view
+                </div>
                 <Button
                   onClick={makeBalancePublic}
                   disabled={isLoading || isDecrypting}
