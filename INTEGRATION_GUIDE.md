@@ -1,12 +1,12 @@
-# FHE Dice Game - Complete Integration Guide
+# FHE Token Swap dApp - Complete Integration Guide
 
-🎲 **Encrypted Dice Rolling Game với Fully Homomorphic Encryption (FHE)**
+🔄 **Privacy-Preserving Token Swap dApp với Fully Homomorphic Encryption (FHE)**
 
 ## 📋 Tổng quan hệ thống
 
 Hệ thống bao gồm:
 
-- **Smart Contract**: EncryptedDiceGame.sol (Solidity + FHEVM)
+- **Smart Contract**: FHETokenSwap.sol (Solidity + FHEVM)
 - **Backend Tasks**: Hardhat tasks để tương tác với contract
 - **Frontend**: Next.js + RainbowKit + Wagmi
 - **End-to-End Tests**: Automated testing suite
@@ -15,15 +15,15 @@ Hệ thống bao gồm:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    FHE DICE GAME SYSTEM                     │
+│                  FHE TOKEN SWAP SYSTEM                      │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌─────────────────┐    ┌──────────────────┐    ┌─────────┐ │
 │  │   FRONTEND      │    │   SMART CONTRACT │    │ FHEVM   │ │
 │  │   (Next.js)     │◄──►│   (Hardhat)      │◄──►│ Network │ │
 │  │                 │    │                  │    │         │ │
-│  │ • RainbowKit    │    │ • EncryptedDice  │    │ • FHE   │ │
-│  │ • Wagmi         │    │ • FHECounter     │    │ • Oracle│ │
+│  │ • RainbowKit    │    │ • FHETokenSwap   │    │ • FHE   │ │
+│  │ • Wagmi         │    │ • Token Swap     │    │ • Oracle│ │
 │  │ • FheVM SDK     │    │                  │    │         │ │
 │  └─────────────────┘    └──────────────────┘    └─────────┘ │
 │                                                             │
@@ -79,7 +79,7 @@ npm install
 npm run dev
 ```
 
-## 🎮 Luồng chơi game
+## 🔄 Luồng Token Swap
 
 ### Bước 1: Wallet Connection
 
@@ -96,28 +96,14 @@ npx hardhat --network localhost task:mint-tokens --amount 1000
 
 # Hoặc swap ETH → ROLL
 npx hardhat --network localhost task:swap-eth-for-roll --eth 0.1
+
+# Swap ROLL → ETH
+npx hardhat --network localhost task:swap-roll-for-eth --roll 500
 ```
 
-### Bước 3: Start Game
+### Bước 3: Check Balance
 
 ```bash
-# Start game: 2 dice, prediction even, stake 100 ROLL
-npx hardhat --network localhost task:start-game --dice 2 --prediction 0 --stake 100
-```
-
-### Bước 4: Resolve Game
-
-```bash
-# Resolve game với ID 0
-npx hardhat --network localhost task:resolve-game --gameid 0
-```
-
-### Bước 5: Check Results
-
-```bash
-# Xem game details
-npx hardhat --network localhost task:get-game --gameid 0
-
 # Check balance
 npx hardhat --network localhost task:get-balance
 ```
@@ -133,16 +119,8 @@ npx hardhat --network localhost task:dice-address
 # Token operations
 npx hardhat --network localhost task:mint-tokens --amount <amount>
 npx hardhat --network localhost task:swap-eth-for-roll --eth <amount>
+npx hardhat --network localhost task:swap-roll-for-eth --roll <amount>
 npx hardhat --network localhost task:get-balance
-
-# Game operations
-npx hardhat --network localhost task:start-game --dice <1-3> --prediction <0|1> --stake <amount>
-npx hardhat --network localhost task:resolve-game --gameid <id>
-npx hardhat --network localhost task:get-game --gameid <id>
-
-# Decryption (chỉ cho game owner)
-npx hardhat --network localhost task:decrypt-prediction --gameid <id>
-npx hardhat --network localhost task:decrypt-stake --gameid <id>
 ```
 
 ## 📱 Frontend Features
@@ -154,13 +132,13 @@ npx hardhat --network localhost task:decrypt-stake --gameid <id>
 - ✅ Balance display (ETH + ROLL)
 - ✅ Real-time updates
 
-### 2. Game Interface
+### 2. Token Swap Interface
 
-- ✅ Dice count selection (1-3)
-- ✅ Even/Odd prediction
-- ✅ Stake input với validation
-- ✅ Real-time game results
-- ✅ 3D dice animation
+- ✅ ETH → ROLL swapping
+- ✅ ROLL → ETH swapping
+- ✅ Amount input với validation
+- ✅ Real-time swap results
+- ✅ Encrypted transaction processing
 
 ### 3. Token Management
 
@@ -169,11 +147,11 @@ npx hardhat --network localhost task:decrypt-stake --gameid <id>
 - ✅ Balance tracking
 - ✅ Transaction confirmations
 
-### 4. Game History
+### 4. Swap History
 
-- ✅ Real-time game list
-- ✅ Win/Loss tracking
-- ✅ Profit/Loss calculations
+- ✅ Real-time swap list
+- ✅ Direction tracking (ETH→ROLL / ROLL→ETH)
+- ✅ Amount tracking
 - ✅ Privacy protection
 
 ## 🔐 Privacy & Security
@@ -181,19 +159,21 @@ npx hardhat --network localhost task:decrypt-stake --gameid <id>
 ### FHE Encryption
 
 ```solidity
-// Prediction và stake được encrypt
-euint8 prediction = FHE.fromExternal(encryptedPrediction, predictionProof);
-euint32 stakeAmount = FHE.fromExternal(encryptedStake, stakeProof);
+// ROLL amounts được encrypt khi swap ROLL → ETH
+euint32 encRollAmount = FHE.fromExternal(encryptedAmount, amountProof);
 
-// Game results được compute trên encrypted data
-ebool won = FHE.eq(isEven, predictedEven);
+// Balance được lưu trữ encrypted
+mapping(address => euint32) public playerBalance;
 ```
 
 ### Access Control
 
 ```solidity
-// Chỉ game owner mới xem được encrypted data
-require(games[gameId].player == msg.sender, "Only game player can view");
+// Chỉ owner mới có thể thêm ETH vào treasury
+modifier onlyOwner() {
+    if (msg.sender != owner) revert OnlyOwner();
+    _;
+}
 ```
 
 ## 🧪 Testing
@@ -222,10 +202,9 @@ npx hardhat test test/EncryptedDiceGameE2E.ts
 
 - ✅ **Contract Deployment**: Khởi tạo và cấu hình
 - ✅ **Token Operations**: Mint, swap, balance tracking
-- ✅ **Game Lifecycle**: Start → resolve → results
+- ✅ **Swap Lifecycle**: ETH→ROLL và ROLL→ETH swaps
 - ✅ **Encryption/Decryption**: FHE privacy protection
 - ✅ **Error Handling**: Validation và edge cases
-- ✅ **Multi-player**: Independent game sessions
 - ✅ **Frontend Integration**: UI/UX và contract interaction
 
 ## 🚀 Deployment

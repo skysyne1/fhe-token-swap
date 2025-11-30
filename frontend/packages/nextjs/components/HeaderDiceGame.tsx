@@ -3,7 +3,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { ConnectWalletButton } from "./ui/connect-wallet-button";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { ArrowLeftRight, ChevronDown, Coins, Dices, Home, LogOut, Wallet } from "lucide-react";
+import { ArrowDownUp, ArrowLeftRight, ChevronDown, Coins, Home, LogOut, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useAccount, useDisconnect, useSwitchChain } from "wagmi";
 import { useDecryptedBalance } from "~~/contexts/DecryptedBalanceContext";
@@ -36,7 +36,7 @@ export function HeaderDiceGame({
   // Get current page from pathname
   const getCurrentPage = () => {
     if (pathname === "/") return "Home";
-    if (pathname === "/game") return "Game";
+    if (pathname === "/swap" || pathname === "/game") return "Swap";
     if (pathname === "/history") return "History";
     if (pathname === "/docs") return "Docs";
     return "";
@@ -60,7 +60,7 @@ export function HeaderDiceGame({
 
     const routeMap: Record<string, string> = {
       Home: "/",
-      Game: "/game",
+      Swap: "/swap",
       History: "/history",
       Docs: "/docs",
     };
@@ -108,16 +108,16 @@ export function HeaderDiceGame({
           className="flex items-center gap-2 hover:opacity-80 transition-opacity "
         >
           <div className="relative">
-            <Dices className="h-8 w-8 text-[#fde047] drop-shadow-[0_0_8px_rgba(253,224,71,0.4)]" />
+            <ArrowDownUp className="h-8 w-8 text-[#fde047] drop-shadow-[0_0_8px_rgba(253,224,71,0.4)]" />
           </div>
           <span className="bg-gradient-to-r from-[#fde047] via-[#fef3c7] to-[#fed7aa] bg-clip-text text-transparent text-xl font-bold drop-shadow-sm">
-            Encrypted Dice Roll
+            FHE Token Swap
           </span>
         </button>
 
         {/* Navigation - Center */}
         <nav className="hidden md:flex items-center gap-1">
-          {["Home", "Game", "History", "Docs"].map(page => (
+          {["Home", "Swap", "History", "Docs"].map(page => (
             <button
               key={page}
               onClick={() => handleNavigate(page)}
@@ -267,7 +267,7 @@ export function HeaderDiceGame({
 
       {/* Mobile Navigation */}
       <nav className="md:hidden flex items-center justify-center gap-1 pb-3 px-4">
-        {["Home", "Game", "History", "Docs"].map(page => (
+        {["Home", "Swap", "History", "Docs"].map(page => (
           <button
             key={page}
             onClick={() => handleNavigate(page)}

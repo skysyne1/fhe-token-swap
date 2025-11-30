@@ -46,7 +46,7 @@ export const ConnectWalletButton = ({
           return (
             <Button onClick={onConnected} size={size} variant={variant} className={cn(className)} type="button">
               {icon}
-              {label.replace("Connect Wallet", "Start Game").replace("Start Playing", "Continue Playing")}
+              Start Swapping
             </Button>
           );
         }

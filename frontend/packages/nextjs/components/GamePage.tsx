@@ -8,13 +8,12 @@ import { GameInterface } from "./GameInterface";
 import { LoadingOverlay } from "./LoadingOverlay";
 import { Toaster } from "./ui/sonner";
 
-export function GamePage() {
-  const { isLoading, loadingMessage, loadingDescription, showDice, showLoading, hideLoading } =
-    useNavigationWithLoading();
+export function SwapPage() {
+  const { isLoading, loadingMessage, loadingDescription, showLoading, hideLoading } = useNavigationWithLoading();
 
   return (
     <div className="min-h-screen bg-background">
-      {isLoading && <LoadingOverlay message={loadingMessage} description={loadingDescription} showDice={showDice} />}
+      {isLoading && <LoadingOverlay message={loadingMessage} description={loadingDescription} />}
 
       <main className="container mx-auto px-4">
         <BreadcrumbNav />
@@ -30,3 +29,6 @@ export function GamePage() {
     </div>
   );
 }
+
+// Keep GamePage for backward compatibility
+export const GamePage = SwapPage;

@@ -7,8 +7,8 @@ import "~~/styles/indexDiceGame.css";
 import { getMetadata } from "~~/utils/helper/getMetadata";
 
 export const metadata = getMetadata({
-  title: "Zama Template",
-  description: "Built with FHEVM",
+  title: "FHE Token Swap dApp",
+  description: "Privacy-preserving token swap dApp built with FHEVM",
 });
 
 const DappWrapper = ({ children }: { children: React.ReactNode }) => {

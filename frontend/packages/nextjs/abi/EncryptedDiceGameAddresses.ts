@@ -23,7 +23,7 @@ export const encryptedDiceGameAddresses: EncryptedDiceGameAddressMap = {
 
   // Sepolia Testnet
   11155111: {
-    address: "0x76AE5b8D14FD8b725B5A0ef43145ce68e7829120" as `0x${string}`,
+    address: "0x319B38474f5d565655e70B268F06832006541bB2" as `0x${string}`,
     abi: require("./EncryptedDiceGameABI").EncryptedDiceGameABI,
   },
 

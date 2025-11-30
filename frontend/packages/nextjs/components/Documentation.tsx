@@ -6,10 +6,6 @@ import { ArrowRight, BookOpen, CheckCircle2, Eye, Key, Lock, Server, Shield, Zap
 export function Documentation() {
   const router = useRouter();
 
-  const handleNavigateToGame = () => {
-    router.push("/game");
-  };
-
   return (
     <div className="w-full max-w-6xl mx-auto space-y-12">
       {/* Header */}
@@ -19,10 +15,10 @@ export function Documentation() {
           <span className="text-sm text-primary">Documentation</span>
         </div>
         <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#fde047] via-[#fef3c7] to-[#fed7aa] bg-clip-text text-transparent">
-          How Encrypted Dice Roll Works
+          How FHE Token Swap Works
         </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          Learn about FHEVM technology and how we ensure complete privacy and fairness in every dice roll
+          Learn about FHEVM technology and how we ensure complete privacy in token swapping transactions
         </p>
       </div>
 
@@ -40,8 +36,8 @@ export function Documentation() {
             <p className="text-lg text-muted-foreground leading-relaxed">
               <span className="text-primary font-semibold">FHEVM (Fully Homomorphic Encryption Virtual Machine)</span>{" "}
               is a revolutionary blockchain technology that enables computations on encrypted data without ever
-              decrypting it. This means your bets, rolls, and results remain completely private throughout the entire
-              process.
+              decrypting it. This means your swap amounts and balances remain completely private throughout the entire
+              transaction process.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
@@ -51,7 +47,7 @@ export function Documentation() {
                 </div>
                 <h3 className="text-xl font-semibold">End-to-End Encryption</h3>
                 <p className="text-muted-foreground">
-                  All game data is encrypted from the moment you place a bet until the result is revealed
+                  All swap data is encrypted from the moment you initiate a swap until the transaction completes
                 </p>
               </div>
 
@@ -61,7 +57,8 @@ export function Documentation() {
                 </div>
                 <h3 className="text-xl font-semibold">On-Chain Privacy</h3>
                 <p className="text-muted-foreground">
-                  Unlike traditional blockchain, FHEVM keeps your gaming activity private while maintaining transparency
+                  Unlike traditional blockchain, FHEVM keeps your swap transactions private while maintaining
+                  transparency
                 </p>
               </div>
 
@@ -69,9 +66,9 @@ export function Documentation() {
                 <div className="p-3 rounded-lg bg-primary/10 w-fit">
                   <Shield className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold">Provably Fair</h3>
+                <h3 className="text-xl font-semibold">Verifiable Transactions</h3>
                 <p className="text-muted-foreground">
-                  All rolls are verifiable on-chain while maintaining complete confidentiality of the process
+                  All swaps are verifiable on-chain while maintaining complete confidentiality of amounts
                 </p>
               </div>
             </div>
@@ -100,8 +97,8 @@ export function Documentation() {
               <div className="flex-1 space-y-3">
                 <h3 className="text-2xl font-semibold">Connect Your Wallet</h3>
                 <p className="text-muted-foreground text-lg">
-                  Connect your MetaMask or any Web3 wallet to the Encrypted Dice Roll platform. Your wallet address is
-                  never linked to your gaming activity thanks to FHEVM&apos;s privacy layer.
+                  Connect your MetaMask or any Web3 wallet to the FHE Token Swap dApp. Your wallet address is never
+                  linked to your swap activity thanks to FHEVM&apos;s privacy layer.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <span className="px-3 py-1 rounded-full bg-secondary text-sm">MetaMask</span>
@@ -144,15 +141,19 @@ export function Documentation() {
                 </div>
               </div>
               <div className="flex-1 space-y-3">
-                <h3 className="text-2xl font-semibold">Place Your Bet</h3>
+                <h3 className="text-2xl font-semibold">Choose Swap Direction</h3>
                 <p className="text-muted-foreground text-lg">
-                  Choose 1 die, enter your bet amount in ROLL tokens, and hit the Roll button. Your bet is encrypted
-                  before being sent to the blockchain, ensuring complete privacy.
+                  Select whether you want to swap ETH → ROLL or ROLL → ETH, enter your amount, and confirm the swap.
+                  Your swap amount is encrypted before being sent to the blockchain, ensuring complete privacy.
                 </p>
-                <div className="grid grid-cols-1 gap-2 max-w-xs">
+                <div className="grid grid-cols-2 gap-2 max-w-xs">
                   <div className="p-3 rounded-lg bg-secondary/50 text-center">
-                    <div className="text-2xl mb-1">⚀</div>
-                    <div className="text-xs text-muted-foreground">1 Die</div>
+                    <div className="text-2xl mb-1">ETH</div>
+                    <div className="text-xs text-muted-foreground">→ ROLL</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-secondary/50 text-center">
+                    <div className="text-2xl mb-1">ROLL</div>
+                    <div className="text-xs text-muted-foreground">→ ETH</div>
                   </div>
                 </div>
               </div>
@@ -168,10 +169,10 @@ export function Documentation() {
                 </div>
               </div>
               <div className="flex-1 space-y-3">
-                <h3 className="text-2xl font-semibold">Encrypted Roll</h3>
+                <h3 className="text-2xl font-semibold">Encrypted Swap</h3>
                 <p className="text-muted-foreground text-lg">
-                  The dice roll happens on-chain using FHEVM&apos;s encrypted random number generation. The entire
-                  process is hidden from everyone, including us, until the result is revealed.
+                  The swap happens on-chain using FHEVM&apos;s encrypted computation. The entire process is hidden from
+                  everyone, including us, while maintaining transaction integrity.
                 </p>
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <Lock className="h-4 w-4 text-primary" />
@@ -190,18 +191,18 @@ export function Documentation() {
                 </div>
               </div>
               <div className="flex-1 space-y-3">
-                <h3 className="text-2xl font-semibold">Instant Results & Payout</h3>
+                <h3 className="text-2xl font-semibold">Instant Completion</h3>
                 <p className="text-muted-foreground text-lg">
-                  If the sum of your dice is even, you win! Payouts are instant and automatic. Win 1.95x your bet
-                  amount. All results are verifiable on-chain while maintaining your privacy.
+                  Swaps are completed instantly and automatically. The exchange rate is fixed at 1 ETH = 1,000 ROLL
+                  tokens with no slippage. All transactions are verifiable on-chain while maintaining your privacy.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-lg">
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    <span className="text-sm text-green-500">Even Sum = Win (1.95x)</span>
+                    <span className="text-sm text-green-500">Fixed Rate: 1 ETH = 1,000 ROLL</span>
                   </div>
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-lg">
-                    <span className="text-sm text-red-500">Odd Sum = Loss</span>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <span className="text-sm text-blue-500">No Slippage</span>
                   </div>
                 </div>
               </div>
@@ -227,7 +228,7 @@ export function Documentation() {
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Complete Anonymity</h3>
                   <p className="text-muted-foreground">
-                    Your betting patterns, amounts, and results are never publicly visible on the blockchain
+                    Your swap patterns, amounts, and balances are never publicly visible on the blockchain
                   </p>
                 </div>
               </div>
@@ -235,8 +236,8 @@ export function Documentation() {
               <div className="flex items-start gap-4">
                 <CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Protected Gaming History</h3>
-                  <p className="text-muted-foreground">Only you can see your complete gaming history and statistics</p>
+                  <h3 className="text-lg font-semibold mb-2">Protected Swap History</h3>
+                  <p className="text-muted-foreground">Only you can see your complete swap history and statistics</p>
                 </div>
               </div>
 
@@ -245,7 +246,7 @@ export function Documentation() {
                 <div>
                   <h3 className="text-lg font-semibold mb-2">No Front-Running</h3>
                   <p className="text-muted-foreground">
-                    Encrypted transactions prevent bots and other players from exploiting your bets
+                    Encrypted transactions prevent bots and other users from exploiting your swap patterns
                   </p>
                 </div>
               </div>
@@ -333,13 +334,13 @@ export function Documentation() {
                 <div className="flex items-start gap-3">
                   <ArrowRight className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                   <p className="text-muted-foreground">
-                    Go to the Game page, select your dice mode, and place your first bet
+                    Choose swap direction (ETH → ROLL or ROLL → ETH), enter amount, and confirm
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
                   <ArrowRight className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                   <p className="text-muted-foreground">
-                    Watch your results in the History page and track your performance
+                    View your swap history in the History page and track your transactions
                   </p>
                 </div>
               </div>
@@ -347,11 +348,11 @@ export function Documentation() {
 
             <div className="pt-4">
               <Button
-                onClick={handleNavigateToGame}
+                onClick={() => router.push("/swap")}
                 size="lg"
                 className="w-full md:w-auto bg-gradient-to-r from-[#fde047] via-[#fbbf24] to-[#f59e0b] text-black hover:scale-105 transition-transform shadow-lg shadow-primary/30"
               >
-                Start Playing Now
+                Start Swapping Now
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
@@ -366,7 +367,7 @@ export function Documentation() {
           <div className="space-y-3 text-sm text-muted-foreground">
             <div className="flex items-start gap-2">
               <span className="text-primary">•</span>
-              <p>Always ensure you have enough ETH for gas fees before swapping or playing</p>
+              <p>Always ensure you have enough ETH for gas fees before swapping</p>
             </div>
             <div className="flex items-start gap-2">
               <span className="text-primary">•</span>
@@ -374,9 +375,7 @@ export function Documentation() {
             </div>
             <div className="flex items-start gap-2">
               <span className="text-primary">•</span>
-              <p>
-                Game results are determined by encrypted on-chain randomness - no one can predict or manipulate outcomes
-              </p>
+              <p>Swap transactions are executed on-chain with encrypted amounts - no one can see your swap values</p>
             </div>
             <div className="flex items-start gap-2">
               <span className="text-primary">•</span>
@@ -384,7 +383,7 @@ export function Documentation() {
             </div>
             <div className="flex items-start gap-2">
               <span className="text-primary">•</span>
-              <p>This is a demonstration of FHEVM technology - please gamble responsibly</p>
+              <p>This is a demonstration of FHEVM technology for privacy-preserving token swaps</p>
             </div>
           </div>
         </div>

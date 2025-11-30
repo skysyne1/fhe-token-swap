@@ -11,7 +11,7 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {isLoading && <LoadingOverlay message={loadingMessage} description={loadingDescription} showDice={true} />}
+      {isLoading && <LoadingOverlay message={loadingMessage} description={loadingDescription} />}
 
       <div className="w-full">
         <LandingPage />

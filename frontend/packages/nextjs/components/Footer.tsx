@@ -1,12 +1,12 @@
 import { useRouter } from "next/navigation";
-import { Dices, Github, MessageCircle } from "lucide-react";
+import { ArrowDownUp, Github, MessageCircle } from "lucide-react";
 
 export function Footer() {
   const router = useRouter();
 
   const handleNavigate = (page: string) => {
     const routeMap: Record<string, string> = {
-      Game: "/game",
+      Swap: "/swap",
       History: "/history",
       Docs: "/docs",
     };
@@ -19,22 +19,22 @@ export function Footer() {
           {/* Logo Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Dices className="h-6 w-6 text-[#fde047] drop-shadow-[0_0_8px_rgba(253,224,71,0.4)]" />
-              <span className="text-[#fde047] font-bold">Encrypted Dice Roll</span>
+              <ArrowDownUp className="h-6 w-6 text-[#fde047] drop-shadow-[0_0_8px_rgba(253,224,71,0.4)]" />
+              <span className="text-[#fde047] font-bold">FHE Token Swap</span>
             </div>
-            <p className="text-sm text-[#a3a3a3] leading-relaxed">Privacy-first dice gaming with FHEVM encryption</p>
+            <p className="text-sm text-[#a3a3a3] leading-relaxed">Privacy-first token swapping with FHEVM encryption</p>
           </div>
 
-          {/* Game Links */}
+          {/* Swap Links */}
           <div className="space-y-4">
-            <h3 className="text-[#ffffff] font-semibold">Game</h3>
+            <h3 className="text-[#ffffff] font-semibold">Swap</h3>
             <ul className="space-y-2">
               <li>
                 <button
-                  onClick={() => handleNavigate("Game")}
+                  onClick={() => handleNavigate("Swap")}
                   className="text-sm text-[#a3a3a3] hover:text-[#fde047] transition-colors duration-200"
                 >
-                  Play Dice
+                  Token Swap
                 </button>
               </li>
               <li>
@@ -42,7 +42,7 @@ export function Footer() {
                   onClick={() => handleNavigate("History")}
                   className="text-sm text-[#a3a3a3] hover:text-[#fde047] transition-colors duration-200"
                 >
-                  Game History
+                  Swap History
                 </button>
               </li>
             </ul>
@@ -107,7 +107,7 @@ export function Footer() {
       {/* Copyright Section */}
       <div className="border-t border-[#333333]">
         <div className="container mx-auto px-4 py-6">
-          <p className="text-center text-sm text-[#a3a3a3]">© 2024 Encrypted Dice Roll. Built with FHEVM technology</p>
+          <p className="text-center text-sm text-[#a3a3a3]">© 2024 FHE Token Swap dApp. Built with FHEVM technology</p>
         </div>
       </div>
     </footer>

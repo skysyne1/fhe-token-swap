@@ -40,7 +40,7 @@ export function TokenSwap({ ethBalance, rollBalance, onSwap, onShowOverlay, onHi
     }
 
     setIsSwapping(true);
-    onShowOverlay?.("Swapping Tokens...", "Confirming transaction on blockchain", true);
+    onShowOverlay?.("Swapping Tokens...", "Confirming transaction on blockchain", false);
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     onSwap(fromToken, amount);

@@ -6,7 +6,7 @@ export function useNavigationWithLoading() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Loading...");
   const [loadingDescription, setLoadingDescription] = useState("Preparing data");
-  const [showDice, setShowDice] = useState(true);
+  const [showDice, setShowDice] = useState(false);
 
   // Show loading for data operations (blockchain calls, API calls, etc.)
   const showLoading = (message: string, description?: string, showDiceAnimation = true) => {

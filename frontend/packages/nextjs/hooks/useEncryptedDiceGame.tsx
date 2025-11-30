@@ -16,20 +16,12 @@ import {
   useWriteContract,
 } from "wagmi";
 
-// Maximum gas limit to avoid "transaction gas limit too high" error
-// Network cap is 16,777,216 (2^24), using 16.6M as safe limit
-// With struct optimization, gas should be lower but we set limit to ensure transaction passes
-
-export type GameRecord = {
-  id: number;
-  diceCount: number;
-  prediction: "even" | "odd";
-  stake: number;
-  result?: number[];
-  won?: boolean;
-  payout?: number;
+export type SwapRecord = {
+  id: string; // Transaction hash
   timestamp: number;
-  isResolved: boolean;
+  ethAmount: bigint;
+  rollAmount: bigint;
+  direction: "ETH_TO_ROLL" | "ROLL_TO_ETH";
 };
 
 export function useEncryptedDiceGame() {
@@ -58,7 +50,7 @@ export function useEncryptedDiceGame() {
       if (chainId !== SEPOLIA_CHAIN_ID) {
         console.warn(
           `⚠️ FHEVM is only supported on Sepolia testnet (chainId: ${SEPOLIA_CHAIN_ID}). ` +
-          `Current network chainId: ${chainId}. FHEVM features will not be available.`
+            `Current network chainId: ${chainId}. FHEVM features will not be available.`,
         );
         setFhevmStatus("error");
         return;
@@ -88,7 +80,7 @@ export function useEncryptedDiceGame() {
   const { clearCache } = useDecryptedBalance();
 
   useEffect(() => {
-    const STORAGE_KEY = "fhe-dice-contract-address";
+    const STORAGE_KEY = "fhe-token-swap-contract-address";
 
     if (contractAddress) {
       try {
@@ -120,7 +112,7 @@ export function useEncryptedDiceGame() {
   // State
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [gameHistory, setGameHistory] = useState<GameRecord[]>([]);
+  const [swapHistory, setSwapHistory] = useState<SwapRecord[]>([]);
   const [encryptedBalance, setEncryptedBalance] = useState<string>("");
   const [decryptedBalance, setDecryptedBalance] = useState<number | undefined>(undefined);
 
@@ -137,12 +129,12 @@ export function useEncryptedDiceGame() {
       const hex = Array.from(value)
         .map(b => b.toString(16).padStart(2, "0"))
         .join("");
-      return (`0x${hex}`) as `0x${string}`;
+      return `0x${hex}` as `0x${string}`;
     }
 
     // Fallback: try toString and wrap
     const str = String(value);
-    return (`0x${str.replace(/^0x/, "")}`) as `0x${string}`;
+    return `0x${str.replace(/^0x/, "")}` as `0x${string}`;
   };
 
   // Read encrypted balance using new pattern
@@ -180,78 +172,95 @@ export function useEncryptedDiceGame() {
     }
   }, [writeData]);
 
-  // Read game counter
-  const { data: gameCounter, refetch: refetchGameCounter } = useReadContract({
-    address: contractAddress as `0x${string}`,
-    abi: EncryptedDiceGameABI,
-    functionName: "gameCounter",
-    query: {
-      enabled: Boolean(contractAddress),
-    },
-  });
+  // Load swap history from blockchain using TokensSwapped events
+  const loadSwapHistory = useCallback(async () => {
+    if (!walletAddress || !contractAddress || !publicClient) {
+      setSwapHistory([]);
+      return;
+    }
 
-  // Load game history from blockchain using events (playerGames mapping removed for gas optimization)
-  useEffect(() => {
-    const loadGameHistory = async () => {
-      if (!walletAddress || !contractAddress || !publicClient) return;
+    try {
+      console.log("🔄 Loading swap history...", { walletAddress, contractAddress });
 
-      try {
-        // Query GameStarted events to get all games for this player
-        const events = await publicClient.getLogs({
-          address: contractAddress as `0x${string}`,
-          event: {
-            type: "event",
-            name: "GameStarted",
-            inputs: [
-              { type: "uint256", indexed: true, name: "gameId" },
-              { type: "address", indexed: true, name: "player" },
-              { type: "uint256", indexed: false, name: "timestamp" },
-            ],
-          },
-          args: {
-            player: walletAddress as `0x${string}`,
-          },
-          fromBlock: 0n,
-        });
+      // Get current block number to limit query range (RPC providers limit to 10000 blocks)
+      const currentBlock = await publicClient.getBlockNumber();
+      const MAX_BLOCKS_QUERY = 10000n;
 
-        const gameIds = events.map((event: any) => {
-          const gameId = (event.args as any).gameId;
-          return typeof gameId === "bigint" ? gameId : BigInt(gameId);
-        });
+      // Query from (currentBlock - 10000) or from block 0 if contract is newer
+      // Contract was deployed around block 6,000,000+ on Sepolia, so we can safely query from a recent block
+      const fromBlock = currentBlock > MAX_BLOCKS_QUERY ? currentBlock - MAX_BLOCKS_QUERY : 0n;
 
-        const games: GameRecord[] = [];
+      console.log(`📊 Querying events from block ${fromBlock} to ${currentBlock} (${currentBlock - fromBlock} blocks)`);
 
-        for (const gameId of gameIds) {
-          const gameData = await publicClient.readContract({
-            address: contractAddress as `0x${string}`,
-            abi: EncryptedDiceGameABI,
-            functionName: "getGame",
-            args: [gameId],
-          });
+      // Query TokensSwapped events to get all swaps for this user
+      const events = await publicClient.getLogs({
+        address: contractAddress as `0x${string}`,
+        event: {
+          type: "event",
+          name: "TokensSwapped",
+          inputs: [
+            { type: "address", indexed: true, name: "user" },
+            { type: "uint256", indexed: false, name: "ethAmount" },
+            { type: "uint256", indexed: false, name: "rollAmount" },
+            { type: "bool", indexed: false, name: "ethToRoll" },
+          ],
+        },
+        args: {
+          user: walletAddress as `0x${string}`,
+        },
+        fromBlock,
+        toBlock: currentBlock,
+      });
 
-          if (gameData) {
-            const gameDataArray = gameData as unknown as any[];
-            const [player, timestamp, isResolved] = gameDataArray;
+      console.log(`📊 Found ${events.length} swap events`);
 
-            games.push({
-              id: Number(gameId),
-              diceCount: 1, // Always 1 die
-              prediction: "even", // Default, actual prediction is encrypted
-              stake: 0, // Default, actual stake is encrypted
-              timestamp: Number(timestamp),
-              isResolved: Boolean(isResolved),
-            });
+      // Get block timestamps for all unique blocks
+      const uniqueBlockNumbers = [...new Set(events.map((e: any) => e.blockNumber))];
+      const blockTimestamps: Record<string, number> = {};
+
+      // Fetch block timestamps in parallel
+      await Promise.all(
+        uniqueBlockNumbers.map(async (blockNumber: bigint) => {
+          try {
+            const block = await publicClient.getBlock({ blockNumber });
+            blockTimestamps[blockNumber.toString()] = Number(block.timestamp);
+          } catch (error) {
+            console.warn(`Failed to get timestamp for block ${blockNumber}:`, error);
+            // Fallback: estimate timestamp (12s per block on Sepolia)
+            blockTimestamps[blockNumber.toString()] = Number(blockNumber) * 12;
           }
-        }
+        }),
+      );
 
-        setGameHistory(games.sort((a, b) => b.timestamp - a.timestamp));
-      } catch (error) {
-        console.error("Failed to load game history:", error);
-      }
-    };
+      const swaps: SwapRecord[] = events.map((event: any, index: number) => {
+        const args = event.args as any;
+        // Get actual block timestamp or fallback to estimate
+        const blockNumberStr = event.blockNumber?.toString() || "";
+        const timestamp =
+          blockTimestamps[blockNumberStr] || (event.blockNumber ? Number(event.blockNumber) * 12 : Date.now() / 1000);
 
-    loadGameHistory();
+        return {
+          id: event.transactionHash || `swap-${index}`,
+          timestamp: Math.floor(timestamp),
+          ethAmount: typeof args.ethAmount === "bigint" ? args.ethAmount : BigInt(args.ethAmount || 0),
+          rollAmount: typeof args.rollAmount === "bigint" ? args.rollAmount : BigInt(args.rollAmount || 0),
+          direction: args.ethToRoll ? "ETH_TO_ROLL" : "ROLL_TO_ETH",
+        };
+      });
+
+      const sortedSwaps = swaps.sort((a, b) => b.timestamp - a.timestamp);
+      setSwapHistory(sortedSwaps);
+      console.log(`✅ Loaded ${sortedSwaps.length} swaps into history`);
+    } catch (error) {
+      console.error("❌ Failed to load swap history:", error);
+      setSwapHistory([]);
+    }
   }, [walletAddress, contractAddress, publicClient]);
+
+  // Auto-load swap history when dependencies change
+  useEffect(() => {
+    loadSwapHistory();
+  }, [loadSwapHistory]);
 
   // Note: makeBalancePublic removed as function doesn't exist in current ABI
 
@@ -420,290 +429,21 @@ export function useEncryptedDiceGame() {
     [contractAddress, walletAddress, walletClient, writeContractAsync, isInitialized, encrypt],
   );
 
-  // Roll dice - simplified with off-chain dice generation
-  const rollDice = useCallback(
-    async (prediction: "even" | "odd", stakeAmount: number): Promise<{ won: boolean; diceResult: number; payout: number } | null> => {
-      if (!contractAddress || !walletAddress || !walletClient || !isInitialized || !publicClient) {
-        return null;
-      }
-
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        console.log("🎲 Rolling dice (off-chain generation with FHE)...");
-
-        // Generate random dice value off-chain (1-6)
-        const diceValue = Math.floor(Math.random() * 6) + 1;
-        // Calculate dice parity off-chain (0=even, 1=odd)
-        const diceParity = diceValue % 2 === 0 ? 0 : 1;
-        console.log("🎲 Generated dice value off-chain:", diceValue, "Parity:", diceParity === 0 ? "even" : "odd");
-
-        // Encrypt prediction, dice value, and dice parity with FHE
-        const predictionValue = prediction === "even" ? 0 : 1;
-        const encryptedPrediction = await encrypt(contractAddress, walletAddress, predictionValue);
-        const encryptedDiceValue = await encrypt(contractAddress, walletAddress, diceValue);
-        const encryptedDiceParity = await encrypt(contractAddress, walletAddress, diceParity);
-
-        console.log("✅ Encryption completed, submitting transaction...");
-
-        // Submit rollDice transaction with encrypted prediction, dice value, and dice parity
-        const txHash = await writeContractAsync({
-          address: contractAddress as `0x${string}`,
-          abi: EncryptedDiceGameABI,
-          functionName: "rollDice",
-          args: [
-            toHexString(encryptedPrediction.encryptedData), // encryptedPrediction
-            toHexString(encryptedPrediction.proof), // predictionProof
-            toHexString(encryptedDiceValue.encryptedData), // encryptedDiceValue
-            toHexString(encryptedDiceValue.proof), // diceValueProof
-            toHexString(encryptedDiceParity.encryptedData), // encryptedDiceParity
-            toHexString(encryptedDiceParity.proof), // diceParityProof
-            stakeAmount, // stakeAmount as plaintext uint32
-          ],
-        });
-
-        console.log("✅ Roll dice transaction submitted! Waiting for confirmation...", txHash);
-
-        // Wait for transaction to be confirmed
-        const receipt = await publicClient.waitForTransactionReceipt({
-          hash: txHash,
-        });
-
-        console.log("✅ Transaction confirmed! Parsing GameResolved event...", receipt);
-
-        // Parse GameResolved event from receipt to get actual results
-        const gameResolvedEvent = receipt.logs.find((log) => {
-          try {
-            const decoded: any = decodeEventLog({
-              abi: EncryptedDiceGameABI as any,
-              data: log.data,
-              topics: log.topics,
-            });
-            return decoded.eventName === "GameResolved";
-          } catch {
-            return false;
-          }
-        });
-
-        if (!gameResolvedEvent) {
-          console.error("❌ GameResolved event not found in transaction receipt");
-          setError("Failed to find GameResolved event in transaction");
-          return null;
-        }
-
-        // Calculate win/lose based on dice value and prediction
-        // diceParity was already calculated above, reuse it
-        const predictionParity = prediction === "even" ? 0 : 1;
-        const won = diceParity === predictionParity;
-        const payout = won ? stakeAmount * 2 : 0;
-
-        console.log("✅ Game resolved! Dice:", diceValue, "Won:", won, "Payout:", payout);
-
-        return { won, diceResult: diceValue, payout };
-      } catch (error) {
-        console.error("Roll dice failed:", error);
-        setError(encryptError || "Failed to roll dice");
-        return null;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [contractAddress, walletAddress, walletClient, isInitialized, encrypt, encryptError, writeContractAsync, publicClient],
-  );
-
-  // Start encrypted game using FHEVM 0.9 pattern (DEPRECATED - use rollDice instead)
-  const startGame = useCallback(
-    async (prediction: "even" | "odd", stakeAmount: number): Promise<number | null> => {
-      if (!contractAddress || !walletAddress || !walletClient || !isInitialized || !publicClient) {
-        return null;
-      }
-
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        console.log("🎲 Starting encrypted game (only prediction encrypted)...");
-
-        // Only encrypt prediction (0 = even, 1 = odd) - this reduces gas cost significantly
-        // Stake amount is sent as plaintext (uint32) to reduce gas cost
-        const predictionValue = prediction === "even" ? 0 : 1;
-        const encryptedPrediction = await encrypt(contractAddress, walletAddress, predictionValue);
-
-        console.log("✅ Encryption completed, submitting transaction...");
-
-        // Submit game transaction
-        // Only prediction is encrypted, stake amount is plaintext (uint32)
-        // This reduces gas cost by ~50% compared to encrypting both values
-        // diceCount removed - always uses 1 die
-        const txHash = await writeContractAsync({
-          address: contractAddress as `0x${string}`,
-          abi: EncryptedDiceGameABI,
-          functionName: "startGame",
-          args: [
-            toHexString(encryptedPrediction.encryptedData), // encryptedPrediction
-            toHexString(encryptedPrediction.proof), // predictionProof
-            stakeAmount, // stakeAmount as plaintext uint32
-          ],
-        });
-
-        console.log("✅ Start game transaction submitted! Waiting for confirmation...", txHash);
-
-        // Wait for transaction to be confirmed
-        const receipt = await publicClient.waitForTransactionReceipt({
-          hash: txHash,
-        });
-
-        console.log("✅ Transaction confirmed! Parsing GameStarted event...", receipt);
-
-        // Parse GameStarted event from receipt to get actual gameId
-        const gameStartedEvent = receipt.logs.find((log) => {
-          try {
-            // Try to decode as GameStarted event
-            const decoded: any = decodeEventLog({
-              abi: EncryptedDiceGameABI as any,
-              data: log.data,
-              topics: log.topics,
-            });
-            return decoded.eventName === "GameStarted";
-          } catch {
-            return false;
-          }
-        });
-
-        if (!gameStartedEvent) {
-          console.error("❌ GameStarted event not found in transaction receipt");
-          setError("Failed to find GameStarted event in transaction");
-          return null;
-        }
-
-        // Decode the event to get gameId
-        const decodedEvent: any = decodeEventLog({
-          abi: EncryptedDiceGameABI as any,
-          data: gameStartedEvent.data,
-          topics: gameStartedEvent.topics,
-        });
-
-        const gameId = Number(decodedEvent.args.gameId);
-        console.log("✅ Game started with gameId:", gameId);
-
-        return gameId;
-      } catch (error) {
-        console.error("Start game failed:", error);
-        setError(encryptError || "Failed to start game");
-        return null;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [contractAddress, walletAddress, walletClient, isInitialized, encrypt, encryptError, writeContractAsync, publicClient],
-  );
-
-  // Validate game exists and belongs to player before resolving
-  const validateGame = useCallback(
-    async (gameId: number): Promise<boolean> => {
-      if (!contractAddress || !walletAddress || !publicClient) {
-        console.error("❌ Missing required data for game validation");
-        return false;
-      }
-
-      try {
-        console.log(`🔍 Validating game ${gameId}...`);
-
-        // Call getGame to check if game exists
-        const gameData = await publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: EncryptedDiceGameABI,
-          functionName: "getGame",
-          args: [BigInt(gameId)],
-        });
-
-        if (!gameData) {
-          console.error(`❌ Game ${gameId} not found`);
-          setError(`Game ${gameId} not found`);
-          return false;
-        }
-
-        const [player, timestamp, isResolved] = gameData as [string, bigint, boolean];
-
-        // Check if game belongs to current player
-        if (player.toLowerCase() !== walletAddress.toLowerCase()) {
-          console.error(`❌ Game ${gameId} does not belong to current player`);
-          setError(`Game ${gameId} does not belong to you`);
-          return false;
-        }
-
-        // Check if game is already resolved
-        if (isResolved) {
-          console.error(`❌ Game ${gameId} is already resolved`);
-          setError(`Game ${gameId} is already resolved`);
-          return false;
-        }
-
-        console.log(`✅ Game ${gameId} is valid and ready to resolve`);
-        return true;
-      } catch (error) {
-        console.error("Game validation failed:", error);
-        setError("Failed to validate game");
-        return false;
-      }
-    },
-    [contractAddress, walletAddress, publicClient],
-  );
-
-  // Resolve game using FHEVM 0.9 self-relaying pattern
-  const resolveGame = useCallback(
-    async (gameId: number): Promise<void> => {
-      if (!contractAddress || !walletAddress || !walletClient) return;
-
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        console.log("🎲 Resolving game with FHEVM 0.9 self-relaying...");
-
-        // Validate game before resolving
-        const isValid = await validateGame(gameId);
-        if (!isValid) {
-          console.error("❌ Game validation failed, aborting resolve");
-          return;
-        }
-
-        // Step 1: Call resolveGame to generate encrypted dice values
-        // Set gas limit to avoid "transaction gas limit too high" error
-        const txHash = await writeContractAsync({
-          address: contractAddress as `0x${string}`,
-          abi: EncryptedDiceGameABI,
-          functionName: "resolveGame",
-          args: [BigInt(gameId)],
-        });
-
-        // Note: In a full implementation, you would need to:
-        // 1. Get encrypted dice handles from the contract
-        // 2. Make them publicly decryptable
-        // 3. Use publicDecrypt to get cleartext values
-        // 4. Submit cleartext values back with verification signatures
-
-        console.log("✅ Game resolution transaction submitted!", txHash);
-      } catch (error) {
-        console.error("Resolve game failed:", error);
-        setError("Failed to resolve game");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [contractAddress, walletAddress, walletClient, writeContractAsync, validateGame],
-  );
-
-  // Refresh data
+  // Refresh data (balance + swap history)
   const refresh = useCallback(async () => {
-    await Promise.all([refetchBalance(), refetchGameCounter()]);
-  }, [refetchBalance, refetchGameCounter]);
+    console.log("🔄 Refreshing balance and swap history...");
+    await Promise.all([refetchBalance(), loadSwapHistory()]);
+    console.log("✅ Refresh complete");
+  }, [refetchBalance, loadSwapHistory]);
 
   // Auto-refresh on transaction completion
   useEffect(() => {
     if (writeData && !isTransactionLoading) {
-      refresh();
+      // Wait a bit for the transaction to be indexed
+      const timer = setTimeout(() => {
+        refresh();
+      }, 2000); // 2 second delay to allow block indexing
+      return () => clearTimeout(timer);
     }
   }, [writeData, isTransactionLoading, refresh]);
 
@@ -718,9 +458,8 @@ export function useEncryptedDiceGame() {
     isTransactionLoading,
     error: error || encryptError,
 
-    // Game data
-    gameHistory,
-    gameCounter: Number(gameCounter || 0),
+    // Swap history data
+    swapHistory,
 
     // Balance data
     encryptedBalance,
@@ -734,9 +473,6 @@ export function useEncryptedDiceGame() {
     mintTokens,
     swapETHForROLL,
     swapROLLForETH,
-    rollDice, // New simplified function (combines startGame + resolveGame)
-    startGame, // DEPRECATED - use rollDice instead
-    resolveGame, // DEPRECATED - use rollDice instead
     refresh,
     refreshBalance: async () => {
       console.log("🔄 Refreshing balance...");

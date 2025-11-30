@@ -1,7 +1,14 @@
 "use client";
 
-import { GamePage } from "../../components/GamePage";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Game() {
-  return <GamePage />;
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/swap");
+  }, [router]);
+
+  return null;
 }

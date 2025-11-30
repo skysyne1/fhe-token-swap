@@ -8,7 +8,7 @@ export function BreadcrumbNav() {
   // Get current page from pathname
   const getCurrentPage = () => {
     if (pathname === "/") return "Home";
-    if (pathname === "/game") return "Game";
+    if (pathname === "/swap" || pathname === "/game") return "Swap";
     if (pathname === "/history") return "History";
     if (pathname === "/docs") return "Docs";
     return "";
@@ -20,8 +20,8 @@ export function BreadcrumbNav() {
   if (currentPage === "Home") return null;
 
   const pageNames: Record<string, string> = {
-    Game: "Play Dice",
-    History: "Game History",
+    Swap: "Token Swap",
+    History: "Swap History",
     Docs: "Documentation",
   };
 
