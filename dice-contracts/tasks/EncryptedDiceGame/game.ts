@@ -25,7 +25,7 @@ import {
  */
 task("task:start-game", "Start a new encrypted dice game")
   .addOptionalParam("address", "Optionally specify the EncryptedDiceGame contract address")
-  .addParam("dice", "Number of dice to roll (1-3)")
+  .addParam("dice", "Number of dice to roll (must be 1)")
   .addParam("prediction", "Prediction: 0 for even, 1 for odd")
   .addParam("stake", "Stake amount in ROLL tokens")
   .setAction(async function (taskArguments: TaskArguments, hre) {
@@ -33,8 +33,8 @@ task("task:start-game", "Start a new encrypted dice game")
     const prediction = parseInt(taskArguments.prediction);
     const stake = validateNonNegativeIntegerParam(taskArguments.stake, "stake");
 
-    if (!Number.isInteger(diceCount) || diceCount < 1 || diceCount > 3) {
-      throw new Error(`Argument --dice must be 1, 2, or 3`);
+    if (diceCount !== 1) {
+      throw new Error(`Argument --dice must be 1`);
     }
     if (!Number.isInteger(prediction) || (prediction !== 0 && prediction !== 1)) {
       throw new Error(`Argument --prediction must be 0 (even) or 1 (odd)`);

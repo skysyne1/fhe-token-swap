@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
+import { useDecryptedBalance } from "../../contexts/DecryptedBalanceContext";
 import { useEncryptedDiceGame } from "../../hooks/useEncryptedDiceGame";
 import { GameSection } from "./GameSection";
 import { TokenSwap } from "./TokenSwap";
 import { toast } from "sonner";
+
+// Hardcoded stake amount when decrypt API returns 500 error
+// TODO: Remove this when API is fixed
+const HARDCODED_STAKE_WHEN_DECRYPT_FAILED = 10;
 
 interface GameInterfaceProps {
   onShowOverlay?: (message: string, description?: string, showDice?: boolean) => void;
@@ -10,15 +15,11 @@ interface GameInterfaceProps {
 }
 
 export function GameInterface({ onShowOverlay, onHideOverlay }: GameInterfaceProps) {
-  const [diceMode, setDiceMode] = useState<1 | 2 | 3>(1);
   const [stakeAmount, setStakeAmount] = useState("10");
   const [isRolling, setIsRolling] = useState(false);
   const [diceValues, setDiceValues] = useState<number[]>([1]);
   const [lastResult, setLastResult] = useState<{ win: boolean; payout: number } | null>(null);
   const [prediction, setPrediction] = useState<"even" | "odd">("even");
-  const [animationInterval, setAnimationInterval] = useState<NodeJS.Timeout | null>(null);
-
-  // Swap state - moved to TokenSwap component
 
   // Smart contract integration - now using real hook
   const {
@@ -27,12 +28,10 @@ export function GameInterface({ onShowOverlay, onHideOverlay }: GameInterfacePro
     isTransactionPending,
     isTransactionLoading,
     error: contractError,
-    gameHistory,
     isContractAvailable,
 
     // Actions
-    startGame,
-    resolveGame,
+    rollDice, // New simplified function (combines startGame + resolveGame)
     swapETHForROLL,
     swapROLLForETH,
     mintTokens,
@@ -40,10 +39,13 @@ export function GameInterface({ onShowOverlay, onHideOverlay }: GameInterfacePro
     clearError,
   } = useEncryptedDiceGame();
 
-  // Balance không còn decrypted tự động - sẽ dùng manual decrypt trong BalanceCards
-  const balance = 0; // Placeholder - actual balance shown in BalanceCards
+  // Get decrypted balance from context
+  const { decryptedRollBalance } = useDecryptedBalance();
+
+  // Balance: use decrypted balance if available, otherwise 0
+  // If decryptedRollBalance is undefined, it means decrypt failed (possibly API 500 error)
+  const balance = decryptedRollBalance !== undefined ? decryptedRollBalance : 0;
   const isContractReady = isContractAvailable;
-  const games = gameHistory || [];
 
   // Clear contract errors when component mounts
   useEffect(() => {
@@ -52,37 +54,27 @@ export function GameInterface({ onShowOverlay, onHideOverlay }: GameInterfacePro
     }
   }, [contractError, clearError]);
 
-  // Initialize dice values when diceMode changes
+  // Initialize dice values (always 1 die)
   useEffect(() => {
     if (!isRolling) {
-      setDiceValues(Array(diceMode).fill(1));
+      setDiceValues([1]);
     }
-  }, [diceMode, isRolling]);
+  }, [isRolling]);
 
-  // Random dice animation when rolling
+  // Random dice animation when rolling (always 1 die)
   useEffect(() => {
     if (isRolling) {
       // Start random animation
       const interval = setInterval(() => {
-        const newValues = Array(diceMode)
-          .fill(0)
-          .map(() => Math.floor(Math.random() * 6) + 1);
+        const newValues = [Math.floor(Math.random() * 6) + 1]; // Always 1 die
         setDiceValues(newValues);
       }, 100); // Update every 100ms for smooth animation
 
-      setAnimationInterval(interval);
-
       return () => {
-        if (interval) clearInterval(interval);
+        clearInterval(interval);
       };
-    } else {
-      // Stop animation when not rolling
-      if (animationInterval) {
-        clearInterval(animationInterval);
-        setAnimationInterval(null);
-      }
     }
-  }, [isRolling, diceMode, animationInterval]);
+  }, [isRolling]);
 
   // Show contract errors as toasts
   useEffect(() => {
@@ -94,71 +86,78 @@ export function GameInterface({ onShowOverlay, onHideOverlay }: GameInterfacePro
   }, [contractError]);
 
   const handleRoll = async () => {
-    const stake = parseFloat(stakeAmount);
-    if (isNaN(stake) || stake <= 0) {
-      toast.error("Please enter a valid stake amount");
-      return;
-    }
-
     // Check if smart contract is available
     if (!isContractReady) {
       toast.error("Smart contract not ready. Please check your network connection.");
       return;
     }
 
-    // Check balance
-    if (balance < stake) {
-      toast.error("Insufficient ROLL balance", {
-        description: `You need ${stake} ROLL but only have ${balance} ROLL`,
-      });
-      return;
+    // If balance is not decrypted (decryptedRollBalance === undefined),
+    // it means decrypt API failed (possibly 500 error)
+    // In this case, hardcode stake amount to allow testing
+    let stake: number;
+    if (decryptedRollBalance === undefined) {
+      // API decrypt failed - use hardcoded stake amount
+      stake = HARDCODED_STAKE_WHEN_DECRYPT_FAILED;
+      console.warn("⚠️ Balance not decrypted (API may be down). Using hardcoded stake amount:", stake);
+    } else {
+      // Normal flow: use user input stake amount
+      stake = parseFloat(stakeAmount);
+      if (isNaN(stake) || stake <= 0) {
+        toast.error("Please enter a valid stake amount");
+        return;
+      }
+
+      // Check balance only if we have decrypted balance
+      if (balance < stake) {
+        toast.error("Insufficient ROLL balance", {
+          description: `You need ${stake} ROLL but only have ${balance} ROLL`,
+        });
+        return;
+      }
     }
 
     setIsRolling(true);
     setLastResult(null);
 
     try {
-      onShowOverlay?.("Starting Game...", "Encrypting your prediction and stake", false);
+      onShowOverlay?.("Rolling Dice...", "Encrypting your prediction and dice value", false);
 
-      // Start the game on smart contract
-      const gameId = await startGame(diceMode, prediction, stake);
+      // Roll dice - off-chain generation with FHE
+      const result = await rollDice(prediction, stake);
 
-      if (gameId !== null) {
-        onShowOverlay?.("Game Started!", `Game ID: ${gameId}. Rolling dice...`, true);
+      if (result) {
+        // Set dice value immediately (already generated off-chain)
+        setDiceValues([result.diceResult]);
 
         // Wait a moment for visual effect
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Auto-resolve the game
-        await resolveGame(Number(gameId));
-
-        // Stop rolling animation first
+        // Stop rolling animation
         setIsRolling(false);
 
         // Brief pause to let animation stop
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        // Refresh data to get latest results
-        await refresh();
+        // Refresh balance to get updated balance
+        await refreshBalance();
 
-        // Find the resolved game and display final results
-        const resolvedGame = games.find((g: any) => g.id === gameId);
-        if (resolvedGame && resolvedGame.result) {
-          // Set final dice values with smooth transition
-          setDiceValues(resolvedGame.result);
-          setLastResult({
-            win: resolvedGame.won || false,
-            payout: resolvedGame.won ? stake * 1.95 : 0,
-          });
+        // Set final result
+        setLastResult({
+          win: result.won,
+          payout: result.payout,
+        });
 
-          toast.success(resolvedGame.won ? "You won!" : "You lost!", {
-            description: `Dice: ${resolvedGame.result?.join(", ")} | ${resolvedGame.won ? `Won ${stake * 1.95} ROLL` : `Lost ${stake} ROLL`}`,
-          });
-        } else {
-          // Fallback if no results found
-          toast.error("Could not retrieve game results");
-        }
+        toast.success(result.won ? "You won!" : "You lost!", {
+          description: `Dice: ${result.diceResult} | ${result.won ? `Won ${result.payout} ROLL` : `Lost ${stake} ROLL`}`,
+        });
 
+        onHideOverlay?.();
+      } else {
+        // rollDice failed
+        toast.error("Failed to roll dice", {
+          description: "Please try again",
+        });
         onHideOverlay?.();
       }
     } catch (error: any) {
@@ -195,10 +194,7 @@ export function GameInterface({ onShowOverlay, onHideOverlay }: GameInterfacePro
     <div className="flex flex-col lg:flex-row gap-6 w-full">
       {/* Game Section - 70% */}
       <GameSection
-        diceMode={diceMode}
-        setDiceMode={setDiceMode}
         diceValues={diceValues}
-        setDiceValues={setDiceValues}
         stakeAmount={stakeAmount}
         setStakeAmount={setStakeAmount}
         prediction={prediction}

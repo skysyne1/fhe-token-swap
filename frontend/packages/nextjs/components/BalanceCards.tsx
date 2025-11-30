@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { useDecrypt } from "../../fhevm-sdk/src/adapters/useDecrypt";
 import { initializeFheInstance } from "../../fhevm-sdk/src/core";
 import { useDecryptedBalance } from "../contexts/DecryptedBalanceContext";
@@ -7,6 +6,7 @@ import { useEncryptedDiceGame } from "../hooks/useEncryptedDiceGame";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Coins, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { useAccount, useBalance } from "wagmi";
 
 export function BalanceCards() {
@@ -151,9 +151,7 @@ export function BalanceCards() {
                   variant="ghost"
                   className="h-8 w-8 p-0"
                 >
-                  <RefreshCw
-                    className={`h-4 w-4 ${isLoading || isRollRefreshing ? "animate-spin" : ""}`}
-                  />
+                  <RefreshCw className={`h-4 w-4 ${isLoading || isRollRefreshing ? "animate-spin" : ""}`} />
                 </Button>
               )}
             </div>
@@ -230,7 +228,7 @@ export function BalanceCards() {
                 variant="ghost"
                 className="h-8 w-8 p-0"
               >
-                <RefreshCw className={`h-4 w-4 ${(isEthRefreshing || isEthFetching) ? "animate-spin" : ""}`} />
+                <RefreshCw className={`h-4 w-4 ${isEthRefreshing || isEthFetching ? "animate-spin" : ""}`} />
               </Button>
             )}
           </div>

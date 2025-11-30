@@ -1,3 +1,4 @@
 {
-  "installCommand": "cd ../.. && pnpm install"
+  "installCommand": "cd ../.. && pnpm install && pnpm sdk:build",
+  "buildCommand": "cd ../.. && pnpm sdk:build && pnpm next:build"
 }

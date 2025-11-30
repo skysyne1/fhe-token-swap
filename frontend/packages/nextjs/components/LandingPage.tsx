@@ -126,7 +126,7 @@ export function LandingPage() {
               2
             </div>
             <h3 className="text-xl font-semibold mb-2">Predict & Bet</h3>
-            <p className="text-muted-foreground">Select 1-3 dice, predict EVEN or ODD, and place your encrypted bet</p>
+            <p className="text-muted-foreground">Select 1 die, predict EVEN or ODD, and place your encrypted bet</p>
           </div>
 
           <div className="text-center">

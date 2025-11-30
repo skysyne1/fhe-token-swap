@@ -287,11 +287,6 @@ export const EncryptedDiceGameABI = [
         type: "address",
       },
       {
-        internalType: "uint8",
-        name: "diceCount",
-        type: "uint8",
-      },
-      {
         internalType: "uint256",
         name: "timestamp",
         type: "uint256",
@@ -300,63 +295,6 @@ export const EncryptedDiceGameABI = [
         internalType: "bool",
         name: "isResolved",
         type: "bool",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "gameId",
-        type: "uint256",
-      },
-    ],
-    name: "getGameDiceValues",
-    outputs: [
-      {
-        internalType: "euint32[]",
-        name: "",
-        type: "uint256[]",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "gameId",
-        type: "uint256",
-      },
-    ],
-    name: "getGamePrediction",
-    outputs: [
-      {
-        internalType: "euint8",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "gameId",
-        type: "uint256",
-      },
-    ],
-    name: "getGameStake",
-    outputs: [
-      {
-        internalType: "euint32",
-        name: "",
-        type: "uint256",
       },
     ],
     stateMutability: "view",
@@ -423,10 +361,28 @@ export const EncryptedDiceGameABI = [
   {
     inputs: [
       {
-        internalType: "uint8",
-        name: "diceCount",
-        type: "uint8",
+        internalType: "externalEuint8",
+        name: "encryptedPrediction",
+        type: "bytes32",
       },
+      {
+        internalType: "bytes",
+        name: "predictionProof",
+        type: "bytes",
+      },
+      {
+        internalType: "uint32",
+        name: "stakeAmount",
+        type: "uint32",
+      },
+    ],
+    name: "startGame",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
       {
         internalType: "externalEuint8",
         name: "encryptedPrediction",
@@ -438,17 +394,32 @@ export const EncryptedDiceGameABI = [
         type: "bytes",
       },
       {
-        internalType: "externalEuint32",
-        name: "encryptedStake",
+        internalType: "externalEuint8",
+        name: "encryptedDiceValue",
         type: "bytes32",
       },
       {
         internalType: "bytes",
-        name: "stakeProof",
+        name: "diceValueProof",
         type: "bytes",
       },
+      {
+        internalType: "externalEuint8",
+        name: "encryptedDiceParity",
+        type: "bytes32",
+      },
+      {
+        internalType: "bytes",
+        name: "diceParityProof",
+        type: "bytes",
+      },
+      {
+        internalType: "uint32",
+        name: "stakeAmount",
+        type: "uint32",
+      },
     ],
-    name: "startGame",
+    name: "rollDice",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -488,44 +459,6 @@ export const EncryptedDiceGameABI = [
     name: "swapROLLForETH",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "player",
-        type: "address",
-      },
-    ],
-    name: "getPlayerGames",
-    outputs: [
-      {
-        internalType: "uint256[]",
-        name: "",
-        type: "uint256[]",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "player",
-        type: "address",
-      },
-    ],
-    name: "getPlayerGameCount",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
     type: "function",
   },
   {

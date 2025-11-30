@@ -118,7 +118,7 @@ describe("EncryptedDiceGame - End-to-End Tests", function () {
     });
 
     it("Should complete full game cycle: start → resolve → check results", async function () {
-      const diceCount = 2;
+      const diceCount = 1;
       const prediction = 0; // even
       const stakeAmount = STAKE_AMOUNT;
 
@@ -240,33 +240,32 @@ describe("EncryptedDiceGame - End-to-End Tests", function () {
       console.log(`✅ All 3 games completed successfully`);
     });
 
-    it("Should handle different dice counts (1, 2, 3)", async function () {
-      for (let diceCount = 1; diceCount <= 3; diceCount++) {
-        const encryptedInput = await fhevm.createEncryptedInput(contractAddress, player1.address);
-        const encryptedPrediction = encryptedInput.add8(0); // always even
-        const encryptedStake = encryptedInput.add32(50);
-        const encryptedValues = await encryptedInput.encrypt();
+    it("Should handle dice count of 1", async function () {
+      const diceCount = 1;
+      const encryptedInput = await fhevm.createEncryptedInput(contractAddress, player1.address);
+      const encryptedPrediction = encryptedInput.add8(0); // always even
+      const encryptedStake = encryptedInput.add32(50);
+      const encryptedValues = await encryptedInput.encrypt();
 
-        const startTx = await encryptedDiceGame
-          .connect(player1)
-          .startGame(
-            diceCount,
-            encryptedValues.handles[0],
-            encryptedValues.inputProof,
-            encryptedValues.handles[1],
-            encryptedValues.inputProof,
-          );
+      const startTx = await encryptedDiceGame
+        .connect(player1)
+        .startGame(
+          diceCount,
+          encryptedValues.handles[0],
+          encryptedValues.inputProof,
+          encryptedValues.handles[1],
+          encryptedValues.inputProof,
+        );
 
-        await startTx.wait();
+      await startTx.wait();
 
-        const resolveTx = await encryptedDiceGame.connect(player1).resolveGame(diceCount - 1);
-        await resolveTx.wait();
+      const resolveTx = await encryptedDiceGame.connect(player1).resolveGame(0);
+      await resolveTx.wait();
 
-        const diceValues = await encryptedDiceGame.getGameDiceValues(diceCount - 1);
-        expect(diceValues.length).to.equal(diceCount);
+      const diceValues = await encryptedDiceGame.getGameDiceValues(0);
+      expect(diceValues.length).to.equal(diceCount);
 
-        console.log(`✅ Game with ${diceCount} dice completed successfully`);
-      }
+      console.log(`✅ Game with ${diceCount} die completed successfully`);
     });
   });
 
@@ -372,10 +371,10 @@ describe("EncryptedDiceGame - End-to-End Tests", function () {
       const encryptedStake = encryptedInput.add32(100);
       const encryptedValues = await encryptedInput.encrypt();
 
-      // Test invalid dice counts
-      for (const invalidDiceCount of [0, 4, 10]) {
-        try {
-          await encryptedDiceGame
+      // Test invalid dice counts (only 1 is valid)
+      for (const invalidDiceCount of [0, 2, 3, 4, 10]) {
+        await expect(
+          encryptedDiceGame
             .connect(player1)
             .startGame(
               invalidDiceCount,
@@ -383,12 +382,9 @@ describe("EncryptedDiceGame - End-to-End Tests", function () {
               encryptedValues.inputProof,
               encryptedValues.handles[1],
               encryptedValues.inputProof,
-            );
-          expect.fail(`Should reject dice count: ${invalidDiceCount}`);
-        } catch (error: any) {
-          expect(error.message).to.include("Dice count must be 1-3");
-          console.log(`✅ Correctly rejected invalid dice count: ${invalidDiceCount}`);
-        }
+            ),
+        ).to.be.revertedWithCustomError(encryptedDiceGame, "InvalidDiceCount");
+        console.log(`✅ Correctly rejected invalid dice count: ${invalidDiceCount}`);
       }
     });
 

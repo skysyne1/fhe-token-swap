@@ -8,20 +8,6 @@ import { toast } from "sonner";
 import { useAccount, useDisconnect, useSwitchChain } from "wagmi";
 import { useDecryptedBalance } from "~~/contexts/DecryptedBalanceContext";
 
-// Helper function to get network name
-const getNetworkName = (chainId?: number) => {
-  switch (chainId) {
-    case 31337:
-      return "Localhost";
-    case 11155111:
-      return "Sepolia";
-    case 1:
-      return "Ethereum";
-    default:
-      return "Unknown";
-  }
-};
-
 interface HeaderProps {
   walletConnected: boolean;
   walletAddress?: string;

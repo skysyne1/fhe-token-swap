@@ -146,21 +146,13 @@ export function Documentation() {
               <div className="flex-1 space-y-3">
                 <h3 className="text-2xl font-semibold">Place Your Bet</h3>
                 <p className="text-muted-foreground text-lg">
-                  Choose 1-3 dice, enter your bet amount in ROLL tokens, and hit the Roll button. Your bet is encrypted
+                  Choose 1 die, enter your bet amount in ROLL tokens, and hit the Roll button. Your bet is encrypted
                   before being sent to the blockchain, ensuring complete privacy.
                 </p>
-                <div className="grid grid-cols-3 gap-2 max-w-xs">
+                <div className="grid grid-cols-1 gap-2 max-w-xs">
                   <div className="p-3 rounded-lg bg-secondary/50 text-center">
                     <div className="text-2xl mb-1">⚀</div>
-                    <div className="text-xs text-muted-foreground">1 Dice</div>
-                  </div>
-                  <div className="p-3 rounded-lg bg-secondary/50 text-center">
-                    <div className="text-2xl mb-1">⚁</div>
-                    <div className="text-xs text-muted-foreground">2 Dice</div>
-                  </div>
-                  <div className="p-3 rounded-lg bg-secondary/50 text-center">
-                    <div className="text-2xl mb-1">⚂</div>
-                    <div className="text-xs text-muted-foreground">3 Dice</div>
+                    <div className="text-xs text-muted-foreground">1 Die</div>
                   </div>
                 </div>
               </div>

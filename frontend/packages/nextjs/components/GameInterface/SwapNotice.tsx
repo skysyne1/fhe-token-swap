@@ -4,9 +4,7 @@ interface SwapNoticeProps {
   isDecryptReady: boolean;
   swapAmount: string;
   swapDirection: "ETH_TO_ROLL" | "ROLL_TO_ETH";
-  minETHRequired: number;
   maxETHAllowed: number;
-  minROLLRequired: number;
   maxROLLAllowed: number;
   rollBalance: number;
 }
@@ -15,9 +13,7 @@ export function SwapNotice({
   isDecryptReady,
   swapAmount,
   swapDirection,
-  minETHRequired,
   maxETHAllowed,
-  minROLLRequired,
   maxROLLAllowed,
   rollBalance,
 }: SwapNoticeProps) {

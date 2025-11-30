@@ -67,7 +67,6 @@ export function TokenSwap({
   const isDecryptReady = decryptedRollBalance !== undefined;
 
   // Swap validation constants
-  const minETHRequired = 0.001; // Minimum ETH to get at least 1 ROLL
   const maxETHAllowed = 4294; // Max ETH to avoid uint32 overflow (~4.3M ROLL)
   const minROLLRequired = 1; // Minimum ROLL to swap
   const maxROLLAllowed = 4294967295; // Max ROLL (uint32)
@@ -339,9 +338,7 @@ export function TokenSwap({
             isDecryptReady={isDecryptReady}
             swapAmount={swapAmount}
             swapDirection={swapDirection}
-            minETHRequired={minETHRequired}
             maxETHAllowed={maxETHAllowed}
-            minROLLRequired={minROLLRequired}
             maxROLLAllowed={maxROLLAllowed}
             rollBalance={rollBalance}
           />
@@ -349,15 +346,15 @@ export function TokenSwap({
           {/* Swap Button */}
           <Button
             onClick={handleSwap}
-            disabled={
+            disabled={Boolean(
               isSwapping ||
-              isTransactionPending ||
-              isTransactionLoading ||
-              !swapAmount ||
-              swapAmount === "" ||
-              !isDecryptReady ||
-              (swapAmount && parseFloat(swapAmount) > maxETHAllowed)
-            }
+                isTransactionPending ||
+                isTransactionLoading ||
+                !swapAmount ||
+                swapAmount === "" ||
+                !isDecryptReady ||
+                (swapAmount && parseFloat(swapAmount) > maxETHAllowed),
+            )}
             className="w-full h-12 bg-gradient-to-r from-[#fde047] via-[#fbbf24] to-[#f59e0b] text-black hover:scale-105 transition-transform disabled:opacity-50 disabled:scale-100 shadow-lg shadow-[#fde047]/30"
           >
             {isTransactionPending ? "Confirm in MetaMask..." : isTransactionLoading ? "Processing..." : "Swap Tokens"}

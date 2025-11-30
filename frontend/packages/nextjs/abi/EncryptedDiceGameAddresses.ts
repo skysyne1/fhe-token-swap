@@ -17,13 +17,13 @@ type EncryptedDiceGameAddressMap = {
 export const encryptedDiceGameAddresses: EncryptedDiceGameAddressMap = {
   // Localhost/Hardhat Network
   31337: {
-    address: "0xb87016578Ad00e7bAAF1d9D99296df7d215A62b2" as `0x${string}`,
+    address: "0x5FbDB2315678afecb367f032d93F642f64180aa3" as `0x${string}`,
     abi: require("./EncryptedDiceGameABI").EncryptedDiceGameABI,
   },
 
   // Sepolia Testnet
   11155111: {
-    address: "0x3160Fd44b86Ec234d773b6426cC10B7B6C7daD6d" as `0x${string}`,
+    address: "0x76AE5b8D14FD8b725B5A0ef43145ce68e7829120" as `0x${string}`,
     abi: require("./EncryptedDiceGameABI").EncryptedDiceGameABI,
   },
 

@@ -2,13 +2,10 @@ import { Dice3D } from "../Dice3D";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Input } from "../ui/input";
-import { Coins, Sparkles } from "lucide-react";
+import { Coins } from "lucide-react";
 
 interface GameSectionProps {
-  diceMode: 1 | 2 | 3;
-  setDiceMode: (mode: 1 | 2 | 3) => void;
   diceValues: number[];
-  setDiceValues: (values: number[]) => void;
   stakeAmount: string;
   setStakeAmount: (amount: string) => void;
   prediction: "even" | "odd";
@@ -20,10 +17,7 @@ interface GameSectionProps {
 }
 
 export function GameSection({
-  diceMode,
-  setDiceMode,
   diceValues,
-  setDiceValues,
   stakeAmount,
   setStakeAmount,
   prediction,
@@ -33,57 +27,19 @@ export function GameSection({
   balance,
   onRoll,
 }: GameSectionProps) {
-  const diceSizes = {
-    1: 120,
-    2: 80,
-    3: 60,
-  };
+  const diceSize = 120; // Always 1 die, fixed size
 
   return (
     <div className="flex-[7] space-y-6">
-      {/* Dice Mode Selector */}
-      <Card className="bg-[#2a2a2a]/50 backdrop-blur-sm border-[#404040]/50 p-6">
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-[#fde047] drop-shadow-[0_0_6px_rgba(253,224,71,0.4)]" />
-            <span className="text-[#d4d4d4]">Select Number of Dice</span>
-          </div>
-          <div className="flex gap-2">
-            {[1, 2, 3].map(mode => (
-              <Button
-                key={mode}
-                onClick={() => {
-                  setDiceMode(mode as 1 | 2 | 3);
-                  setDiceValues(Array(mode).fill(1));
-                }}
-                variant={diceMode === mode ? "default" : "outline"}
-                className={
-                  diceMode === mode
-                    ? "bg-gradient-to-r from-[#fde047] via-[#fef3c7] to-[#fed7aa] text-[#1a1a1a] hover:opacity-90 border-2 border-[#fde047] shadow-xl shadow-[#fde047]/50 hover:scale-105 transition-all duration-200"
-                    : "bg-[#404040] border-[#404040] hover:border-[#fde047]/50 text-[#d4d4d4] hover:text-[#fef3c7] transition-all duration-200"
-                }
-                size="lg"
-              >
-                {mode} {mode === 1 ? "Die" : "Dice"}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </Card>
-
       {/* Dice Display */}
       <Card className="relative overflow-hidden bg-gradient-to-br from-[#2a2a2a]/60 to-[#1a1a1a]/40 backdrop-blur-sm border-2 border-[#fde047]/30 p-8 md:p-12 min-h-[300px] shadow-2xl shadow-[#fde047]/10">
         <div className="absolute inset-0 bg-gradient-to-br from-[#fde047]/5 via-transparent to-[#fed7aa]/5" />
-        <div
-          className={`relative flex items-center justify-center gap-6 md:gap-8 h-full ${
-            diceMode === 3 ? "flex-wrap" : ""
-          }`}
-        >
+        <div className="relative flex items-center justify-center gap-6 md:gap-8 h-full">
           {diceValues.map((value, index) => (
             <Dice3D
               key={index}
               value={value}
-              size={diceSizes[diceMode]}
+              size={diceSize}
               isRolling={isRolling}
               showGlow={lastResult?.win && !isRolling}
             />
@@ -224,7 +180,7 @@ export function GameSection({
           </div>
           <div className="flex items-start gap-2">
             <span className="text-[#fde047] mt-0.5">•</span>
-            <span>Roll 1-3 dice and bet ROLL tokens</span>
+            <span>Roll 1 die and bet ROLL tokens</span>
           </div>
           <div className="flex items-start gap-2">
             <span className="text-[#fde047] mt-0.5">•</span>

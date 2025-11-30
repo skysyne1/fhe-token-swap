@@ -76,11 +76,11 @@ describe("EncryptedDiceGame", function () {
           ethers.ZeroHash as any, // Mock encrypted stake
           emptyProof,
         ),
-      ).to.be.revertedWith("Dice count must be 1-3");
+      ).to.be.revertedWithCustomError(diceGame, "InvalidDiceCount");
     });
 
     it("Should create game with valid parameters", async function () {
-      const diceCount = 2;
+      const diceCount = 1;
       const emptyProof = "0x";
 
       // Note: In real implementation, these would be properly encrypted
