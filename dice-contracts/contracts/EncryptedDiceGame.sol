@@ -30,6 +30,7 @@ contract FHETokenSwap is ZamaEthereumConfig {
     event TokensSwapped(address indexed user, uint256 ethAmount, uint256 rollAmount, bool ethToRoll);
     event TokensMinted(address indexed user, uint256 amount);
     event TreasuryFunded(address indexed funder, uint256 amount);
+    event TokensTransferred(address indexed from, address indexed to, uint256 amount);
 
     // Modifiers
     modifier onlyOwner() {
@@ -148,6 +149,40 @@ contract FHETokenSwap is ZamaEthereumConfig {
     /// @return The encrypted balance
     function getPlayerBalance(address player) external view returns (euint32) {
         return playerBalance[player];
+    }
+
+    /// @notice Transfer ROLL tokens to another address
+    /// @param _to Recipient address
+    /// @param _amount Plaintext amount (for validation)
+    /// @param _encryptedAmount Encrypted ROLL amount to transfer
+    /// @param _amountProof Proof for the encrypted amount
+    function transferROLL(
+        address _to,
+        uint32 _amount,
+        externalEuint32 _encryptedAmount,
+        bytes calldata _amountProof
+    ) external {
+        require(_to != address(0), "Invalid recipient address");
+        require(_to != msg.sender, "Cannot transfer to yourself");
+        require(_amount > 0, "Amount must be greater than 0");
+        
+        euint32 encAmount = FHE.fromExternal(_encryptedAmount, _amountProof);
+        
+        // Subtract from sender
+        playerBalance[msg.sender] = FHE.sub(playerBalance[msg.sender], encAmount);
+        
+        // Add to receiver
+        playerBalance[_to] = FHE.add(playerBalance[_to], encAmount);
+        
+        // Set permissions for sender balance
+        FHE.allowThis(playerBalance[msg.sender]);
+        FHE.allow(playerBalance[msg.sender], msg.sender);
+        
+        // Set permissions for receiver balance
+        FHE.allowThis(playerBalance[_to]);
+        FHE.allow(playerBalance[_to], _to);
+        
+        emit TokensTransferred(msg.sender, _to, _amount);
     }
 
     /// @notice Withdraw ETH (owner only)

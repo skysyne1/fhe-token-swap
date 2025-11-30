@@ -429,6 +429,74 @@ export function useEncryptedDiceGame() {
     [contractAddress, walletAddress, walletClient, writeContractAsync, isInitialized, encrypt],
   );
 
+  // Transfer ROLL tokens to another address
+  const transferROLL = useCallback(
+    async (recipientAddress: string, rollAmount: number) => {
+      // Validate prerequisites
+      if (!contractAddress) {
+        const err = new Error("Contract address is not available");
+        console.error(err);
+        setError(err.message);
+        throw err;
+      }
+
+      if (!walletAddress) {
+        const err = new Error("Wallet not connected");
+        console.error(err);
+        setError(err.message);
+        throw err;
+      }
+
+      if (!walletClient) {
+        const err = new Error("Wallet client not ready. Please reconnect your wallet.");
+        console.error(err);
+        setError(err.message);
+        throw err;
+      }
+
+      if (!isInitialized) {
+        const err = new Error("FHEVM not initialized. Please wait a moment and try again.");
+        console.error(err);
+        setError(err.message);
+        throw err;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        console.log(`🔄 Transferring ${rollAmount} ROLL to ${recipientAddress}`);
+
+        // Encrypt ROLL amount
+        const encryptedAmount = await encrypt(contractAddress, walletAddress, rollAmount);
+        console.log("🔐 Encrypted data structure:", encryptedAmount);
+
+        // Submit transaction
+        const txHash = await writeContractAsync({
+          address: contractAddress as `0x${string}`,
+          abi: EncryptedDiceGameABI,
+          functionName: "transferROLL",
+          args: [
+            recipientAddress,
+            rollAmount,
+            toHexString(encryptedAmount.encryptedData),
+            toHexString(encryptedAmount.proof),
+          ],
+        });
+
+        console.log("✅ Transfer transaction submitted!", txHash);
+        // Note: Transaction confirmation will be handled by the component using useWaitForTransactionReceipt
+      } catch (error) {
+        console.error("Transfer failed:", error);
+        setError("Failed to transfer ROLL");
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [contractAddress, walletAddress, walletClient, writeContractAsync, isInitialized, encrypt],
+  );
+
   // Refresh data (balance + swap history)
   const refresh = useCallback(async () => {
     console.log("🔄 Refreshing balance and swap history...");
@@ -473,6 +541,7 @@ export function useEncryptedDiceGame() {
     mintTokens,
     swapETHForROLL,
     swapROLLForETH,
+    transferROLL,
     refresh,
     refreshBalance: async () => {
       console.log("🔄 Refreshing balance...");

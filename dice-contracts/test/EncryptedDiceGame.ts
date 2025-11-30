@@ -12,8 +12,8 @@ describe("EncryptedDiceGame", function () {
   beforeEach(async function () {
     [owner, player1, player2] = await ethers.getSigners();
 
-    const EncryptedDiceGame = await ethers.getContractFactory("EncryptedDiceGame");
-    diceGame = await EncryptedDiceGame.deploy();
+    const FHETokenSwap = await ethers.getContractFactory("FHETokenSwap");
+    diceGame = await FHETokenSwap.deploy();
     await diceGame.waitForDeployment();
   });
 

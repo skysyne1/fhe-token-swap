@@ -39,11 +39,11 @@ describe("EncryptedDiceGame - End-to-End Tests", function () {
 
     // Deploy contracts fresh for each test
     await deployments.fixture(["EncryptedDiceGame"]);
-    const deployment = await deployments.get("EncryptedDiceGame");
+    const deployment = await deployments.get("FHETokenSwap");
     contractAddress = deployment.address;
 
     // Get contract instance
-    encryptedDiceGame = await ethers.getContractAt("EncryptedDiceGame", contractAddress);
+    encryptedDiceGame = await ethers.getContractAt("FHETokenSwap", contractAddress);
 
     console.log(`\n🎯 Test Setup Complete:`);
     console.log(`   Contract: ${contractAddress}`);
@@ -97,6 +97,46 @@ describe("EncryptedDiceGame - End-to-End Tests", function () {
       console.log(`✅ Player1 swapped ${ETH_SWAP_AMOUNT} ETH for ${expectedRollAmount} ROLL tokens`);
     });
 
+    it("Should swap ROLL for ETH tokens", async function () {
+      // Mint tokens first
+      await encryptedDiceGame.connect(player1).mintTokens(1000);
+
+      // Add ETH to contract treasury
+      await encryptedDiceGame.connect(owner).addTreasuryETH({ value: ethers.parseEther("1") });
+
+      // Get initial balances
+      const initialETHBalance = await ethers.provider.getBalance(player1.address);
+      const initialContractBalance = await encryptedDiceGame.getContractETHBalance();
+
+      // Create encrypted input
+      const encryptedInput = await fhevm.createEncryptedInput(contractAddress, player1.address);
+      const encryptedAmount = encryptedInput.add32(500); // 500 ROLL
+      const encryptedValues = await encryptedInput.encrypt();
+
+      // Swap ROLL → ETH
+      const tx = await encryptedDiceGame
+        .connect(player1)
+        .swapROLLForETH(500, encryptedValues.handles[0], encryptedValues.inputProof);
+      const receipt = await tx.wait();
+
+      // Verify ROLL balance decreased
+      const finalEncryptedBalance = await encryptedDiceGame.getBalance(player1.address);
+      const finalClearBalance = await fhevm.userDecryptEuint(
+        FhevmType.euint32,
+        finalEncryptedBalance,
+        contractAddress,
+        player1,
+      );
+      expect(finalClearBalance).to.equal(500); // 1000 - 500
+
+      // Verify contract ETH balance decreased
+      const finalContractBalance = await encryptedDiceGame.getContractETHBalance();
+      const expectedETHAmount = (500n * ethers.parseEther("1")) / 1000n; // 0.5 ETH
+      expect(finalContractBalance).to.equal(initialContractBalance - expectedETHAmount);
+
+      console.log(`✅ Player1 swapped 500 ROLL for ${ethers.formatEther(expectedETHAmount)} ETH`);
+    });
+
     it("Should handle multiple mints correctly", async function () {
       // First mint
       await encryptedDiceGame.connect(player1).mintTokens(500);
@@ -108,6 +148,40 @@ describe("EncryptedDiceGame - End-to-End Tests", function () {
       expect(clearBalance).to.equal(800);
 
       console.log("✅ Multiple mints accumulated correctly: 800 ROLL");
+    });
+
+    it("Should return correct contract ETH balance", async function () {
+      // Send ETH to contract
+      await player1.sendTransaction({
+        to: contractAddress,
+        value: ethers.parseEther("1"),
+      });
+
+      const balance = await encryptedDiceGame.getContractETHBalance();
+      expect(balance).to.equal(ethers.parseEther("1"));
+
+      console.log(`✅ Contract ETH balance verified: ${ethers.formatEther(balance)} ETH`);
+    });
+
+    it("Should allow owner to add ETH to treasury", async function () {
+      const initialBalance = await encryptedDiceGame.getContractETHBalance();
+
+      await expect(encryptedDiceGame.connect(owner).addTreasuryETH({ value: ethers.parseEther("1") }))
+        .to.emit(encryptedDiceGame, "TreasuryFunded")
+        .withArgs(owner.address, ethers.parseEther("1"));
+
+      const finalBalance = await encryptedDiceGame.getContractETHBalance();
+      expect(finalBalance).to.equal(initialBalance + ethers.parseEther("1"));
+
+      console.log(`✅ Owner added 1 ETH to treasury`);
+    });
+
+    it("Should reject non-owner from adding ETH to treasury", async function () {
+      await expect(
+        encryptedDiceGame.connect(player1).addTreasuryETH({ value: ethers.parseEther("1") }),
+      ).to.be.revertedWithCustomError(encryptedDiceGame, "OnlyOwner");
+
+      console.log(`✅ Correctly rejected non-owner from adding ETH to treasury`);
     });
   });
 

@@ -111,6 +111,31 @@ export const EncryptedDiceGameABI = [
     type: "event",
   },
   {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "from",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "to",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "TokensTransferred",
+    type: "event",
+  },
+  {
     inputs: [],
     name: "BASIS_POINTS",
     outputs: [
@@ -457,6 +482,34 @@ export const EncryptedDiceGameABI = [
       },
     ],
     name: "swapROLLForETH",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "_to",
+        type: "address",
+      },
+      {
+        internalType: "uint32",
+        name: "_amount",
+        type: "uint32",
+      },
+      {
+        internalType: "externalEuint32",
+        name: "_encryptedAmount",
+        type: "bytes32",
+      },
+      {
+        internalType: "bytes",
+        name: "_amountProof",
+        type: "bytes",
+      },
+    ],
+    name: "transferROLL",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

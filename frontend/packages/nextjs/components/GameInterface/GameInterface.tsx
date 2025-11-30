@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useDecryptedBalance } from "../../contexts/DecryptedBalanceContext";
 import { useEncryptedDiceGame } from "../../hooks/useEncryptedDiceGame";
 import { TokenSwap } from "./TokenSwap";
+import { TransferTokens } from "./TransferTokens";
 import { toast } from "sonner";
 
 interface GameInterfaceProps {
@@ -22,6 +23,7 @@ export function GameInterface({ onShowOverlay, onHideOverlay }: GameInterfacePro
     // Actions
     swapETHForROLL,
     swapROLLForETH,
+    transferROLL,
     mintTokens,
     refreshBalance,
     clearError,
@@ -70,22 +72,37 @@ export function GameInterface({ onShowOverlay, onHideOverlay }: GameInterfacePro
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <TokenSwap
-        balance={balance}
-        isContractReady={isContractReady}
-        isContractLoading={isContractLoading}
-        isTransactionPending={isTransactionPending}
-        isTransactionLoading={isTransactionLoading}
-        contractError={contractError}
-        onMintTokens={handleMintTokens}
-        onSwapETHForROLL={swapETHForROLL}
-        onSwapROLLForETH={swapROLLForETH}
-        onRefresh={refreshBalance}
-        onClearError={clearError}
-        onShowOverlay={onShowOverlay}
-        onHideOverlay={onHideOverlay}
-      />
+    <div className="w-full max-w-7xl mx-auto">
+      <div className="flex flex-col lg:flex-row gap-6">
+        <TokenSwap
+          balance={balance}
+          isContractReady={isContractReady}
+          isContractLoading={isContractLoading}
+          isTransactionPending={isTransactionPending}
+          isTransactionLoading={isTransactionLoading}
+          contractError={contractError}
+          onMintTokens={handleMintTokens}
+          onSwapETHForROLL={swapETHForROLL}
+          onSwapROLLForETH={swapROLLForETH}
+          onRefresh={refreshBalance}
+          onClearError={clearError}
+          onShowOverlay={onShowOverlay}
+          onHideOverlay={onHideOverlay}
+        />
+        <TransferTokens
+          balance={balance}
+          isContractReady={isContractReady}
+          isContractLoading={isContractLoading}
+          isTransactionPending={isTransactionPending}
+          isTransactionLoading={isTransactionLoading}
+          contractError={contractError}
+          onTransferROLL={transferROLL}
+          onRefresh={refreshBalance}
+          onClearError={clearError}
+          onShowOverlay={onShowOverlay}
+          onHideOverlay={onHideOverlay}
+        />
+      </div>
     </div>
   );
 }
