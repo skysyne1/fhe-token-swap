@@ -62,12 +62,12 @@ try {
     Write-Warning "Some contract tests failed, but continuing..."
 }
 
-Write-Status "Running end-to-end contract tests..."
+Write-Status "Running transfer end-to-end tests..."
 try {
-    npx hardhat test test/EncryptedDiceGameE2E.ts
-    Write-Success "E2E contract tests passed"
+    npx hardhat test test/TransferE2E.test.ts
+    Write-Success "Transfer E2E tests passed"
 } catch {
-    Write-Warning "E2E contract tests failed, but continuing..."
+    Write-Warning "Transfer E2E tests failed, but continuing..."
 }
 
 # Step 2: Deploy to Local Network
@@ -93,15 +93,16 @@ Write-Status "Step 3: Testing Contract Interaction Tasks"
 
 Write-Status "Getting contract address..."
 $addressOutput = npx hardhat --network localhost task:dice-address 2>&1
-$contractAddress = ($addressOutput | Select-String "EncryptedDiceGame address is (.+)").Matches[0].Groups[1].Value
+$addressMatch = ($addressOutput | Select-String -Pattern "0x[0-9a-fA-F]{40}" | Select-Object -First 1)
 
-if (-not $contractAddress) {
+if (-not $addressMatch) {
     Write-Error "Failed to get contract address"
     Stop-Job $hardhatJob
     Remove-Job $hardhatJob
     exit 1
 }
-Write-Success "Contract deployed at: $contractAddress"
+$contractAddress = $addressMatch.Matches[0].Value
+Write-Success "FHETokenSwap deployed at: $contractAddress"
 
 Write-Status "Testing token minting..."
 try {
@@ -127,29 +128,7 @@ try {
     Write-Warning "ETH swap test failed"
 }
 
-Write-Status "Testing game start..."
-try {
-    npx hardhat --network localhost task:start-game --dice 2 --prediction 0 --stake 100
-    Write-Success "Game start test passed"
-} catch {
-    Write-Warning "Game start test failed"
-}
-
-Write-Status "Testing game resolution..."
-try {
-    npx hardhat --network localhost task:resolve-game --gameid 0
-    Write-Success "Game resolution test passed"
-} catch {
-    Write-Warning "Game resolution test failed"
-}
-
-Write-Status "Testing game data retrieval..."
-try {
-    npx hardhat --network localhost task:get-game --gameid 0
-    Write-Success "Game data retrieval test passed"
-} catch {
-    Write-Warning "Game data retrieval test failed"
-}
+Write-Status "Transfer testing requires client-side encryption (manual verification recommended)."
 
 # Step 4: Frontend Tests
 Write-Status "Step 4: Testing Frontend Integration"
@@ -211,10 +190,9 @@ Write-Host "4. Test the following features:"
 Write-Host "   ✓ Mint ROLL tokens"
 Write-Host "   ✓ Check balance display"
 Write-Host "   ✓ Swap ETH for ROLL tokens"
-Write-Host "   ✓ Start a dice game"
-Write-Host "   ✓ Resolve the game"
-Write-Host "   ✓ Check game history"
-Write-Host "   ✓ Network switching"
+Write-Host "   ✓ Decrypt balance + Transfer ROLL"
+Write-Host "   ✓ Check swap + transfer history tabs"
+Write-Host "   ✓ Review Docs page & network switching"
 Write-Host ""
 
 # Wait for user input
@@ -247,9 +225,9 @@ Write-Success "✅ Integration: READY FOR MANUAL TESTING"
 Write-Host ""
 Write-Status "🎯 NEXT STEPS:"
 Write-Host "1. Review any warnings above"
-Write-Host "2. Update contract addresses in frontend config"
+Write-Host "2. Confirm contract addresses regenerated for frontend"
 Write-Host "3. Deploy to Sepolia testnet when ready"
-Write-Host "4. Complete full end-to-end testing on testnet"
+Write-Host "4. Complete full encrypted transfer testing on testnet"
 Write-Host ""
 Write-Success "🚀 End-to-End testing completed successfully!"
 

@@ -58,9 +58,9 @@ if ! npx hardhat test; then
     print_warning "Some contract tests failed, but continuing..."
 fi
 
-print_status "Running end-to-end contract tests..."
-if ! npx hardhat test test/EncryptedDiceGameE2E.ts; then
-    print_warning "E2E contract tests failed, but continuing..."
+print_status "Running transfer end-to-end tests..."
+if ! npx hardhat test test/TransferE2E.test.ts; then
+    print_warning "Transfer E2E tests failed, but continuing..."
 fi
 
 # Step 2: Deploy to Local Network
@@ -82,13 +82,13 @@ fi
 print_status "Step 3: Testing Contract Interaction Tasks"
 
 print_status "Getting contract address..."
-CONTRACT_ADDRESS=$(npx hardhat --network localhost task:dice-address 2>&1 | grep "EncryptedDiceGame address is" | awk '{print $4}')
+CONTRACT_ADDRESS=$(npx hardhat --network localhost task:dice-address 2>&1 | grep -Eo "0x[a-fA-F0-9]{40}" | head -n 1)
 if [ -z "$CONTRACT_ADDRESS" ]; then
     print_error "Failed to get contract address"
     kill $HARDHAT_PID
     exit 1
 fi
-print_success "Contract deployed at: $CONTRACT_ADDRESS"
+print_success "FHETokenSwap deployed at: $CONTRACT_ADDRESS"
 
 print_status "Testing token minting..."
 if ! npx hardhat --network localhost task:mint-tokens --amount 1000; then
@@ -105,20 +105,7 @@ if ! npx hardhat --network localhost task:swap-eth-for-roll --eth 0.1; then
     print_warning "ETH swap test failed"
 fi
 
-print_status "Testing game start..."
-if ! npx hardhat --network localhost task:start-game --dice 2 --prediction 0 --stake 100; then
-    print_warning "Game start test failed"
-fi
-
-print_status "Testing game resolution..."
-if ! npx hardhat --network localhost task:resolve-game --gameid 0; then
-    print_warning "Game resolution test failed"
-fi
-
-print_status "Testing game data retrieval..."
-if ! npx hardhat --network localhost task:get-game --gameid 0; then
-    print_warning "Game data retrieval test failed"
-fi
+print_status "Transfer testing requires client-side encryption (manual verification recommended)."
 
 # Step 4: Frontend Tests
 print_status "Step 4: Testing Frontend Integration"
@@ -168,10 +155,9 @@ echo "4. Test the following features:"
 echo "   ✓ Mint ROLL tokens"
 echo "   ✓ Check balance display"
 echo "   ✓ Swap ETH for ROLL tokens"
-echo "   ✓ Start a dice game"
-echo "   ✓ Resolve the game"
-echo "   ✓ Check game history"
-echo "   ✓ Network switching"
+echo "   ✓ Decrypt balance + Transfer ROLL"
+echo "   ✓ Check swap + transfer history tabs"
+echo "   ✓ Review Docs page & network switching"
 echo ""
 
 # Wait for user input
@@ -202,9 +188,9 @@ print_success "✅ Integration: READY FOR MANUAL TESTING"
 echo ""
 print_status "🎯 NEXT STEPS:"
 echo "1. Review any warnings above"
-echo "2. Update contract addresses in frontend config"
+echo "2. Confirm contract addresses regenerated for frontend"
 echo "3. Deploy to Sepolia testnet when ready"
-echo "4. Complete full end-to-end testing on testnet"
+echo "4. Complete full encrypted transfer testing on testnet"
 echo ""
 print_success "🚀 End-to-End testing completed successfully!"
 
